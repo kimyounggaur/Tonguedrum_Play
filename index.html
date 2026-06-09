@@ -72,9 +72,81 @@
       container-type: size;
     }
 
+    .bg-animation {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: .72;
+    }
+
+    .bg-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .bg-wave {
+      fill: none;
+      stroke: rgba(255, 236, 110, .18);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 9 18;
+      animation: bgWaveDrift 7.5s linear infinite;
+    }
+
+    .bg-note,
+    .bg-sparkle,
+    .bg-drum {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .bg-note {
+      fill: rgba(255, 242, 148, .72);
+      filter: drop-shadow(0 0 8px rgba(255, 210, 94, .22));
+      animation: bgNoteFloat 5.6s ease-in-out infinite;
+    }
+
+    .bg-note--two {
+      animation-delay: -1.7s;
+      animation-duration: 6.4s;
+    }
+
+    .bg-note--three {
+      animation-delay: -3.1s;
+      animation-duration: 7.1s;
+    }
+
+    .bg-sparkle {
+      fill: rgba(255, 251, 214, .72);
+      animation: bgSparklePop 2.4s ease-in-out infinite;
+    }
+
+    .bg-sparkle--two {
+      animation-delay: -.8s;
+    }
+
+    .bg-sparkle--three {
+      animation-delay: -1.5s;
+    }
+
+    .bg-drum {
+      filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .18));
+      animation: bgDrumBob 4.8s ease-in-out infinite;
+    }
+
+    .bg-drum--two {
+      animation-delay: -2.2s;
+      animation-duration: 5.7s;
+    }
+
     .screen {
       position: absolute;
       inset: 0;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -762,6 +834,57 @@
       }
     }
 
+    @keyframes bgWaveDrift {
+      0% {
+        stroke-dashoffset: 0;
+        transform: translateX(-22px);
+      }
+
+      100% {
+        stroke-dashoffset: -108;
+        transform: translateX(22px);
+      }
+    }
+
+    @keyframes bgNoteFloat {
+      0%,
+      100% {
+        opacity: .34;
+        transform: translateY(10px) rotate(-8deg) scale(.88);
+      }
+
+      45% {
+        opacity: .82;
+        transform: translateY(-18px) rotate(9deg) scale(1.08);
+      }
+    }
+
+    @keyframes bgSparklePop {
+      0%,
+      100% {
+        opacity: .22;
+        transform: scale(.58) rotate(0deg);
+      }
+
+      48% {
+        opacity: .9;
+        transform: scale(1.12) rotate(18deg);
+      }
+    }
+
+    @keyframes bgDrumBob {
+      0%,
+      100% {
+        opacity: .34;
+        transform: translateY(8px) rotate(-4deg) scale(.92);
+      }
+
+      50% {
+        opacity: .64;
+        transform: translateY(-12px) rotate(5deg) scale(1.02);
+      }
+    }
+
     @keyframes tongueOutlinePulse {
       0% {
         stroke-width: 3;
@@ -911,6 +1034,10 @@
       .alpaca-mallet-left,
       .alpaca-mallet-right,
       .alpaca-drum-glow,
+      .bg-wave,
+      .bg-note,
+      .bg-sparkle,
+      .bg-drum,
       .tongue-hit.is-playing::after {
         transform: none;
       }
@@ -919,6 +1046,37 @@
 </head>
 <body>
   <div id="app">
+    <div class="bg-animation" aria-hidden="true">
+      <svg class="bg-svg" viewBox="0 0 360 640" preserveAspectRatio="none">
+        <path class="bg-wave" d="M-20 104 C42 74 78 142 136 112 S244 78 314 124 S414 150 450 102"/>
+        <path class="bg-wave" d="M-38 514 C36 476 86 552 150 510 S256 458 330 524 S420 548 462 492"/>
+
+        <g class="bg-drum bg-drum--one" transform="translate(40 118)">
+          <circle cx="38" cy="38" r="30" fill="rgba(234, 162, 210, .34)" stroke="rgba(255, 236, 110, .24)" stroke-width="3"/>
+          <path d="M20 36 Q28 18 38 36 T56 36" fill="none" stroke="rgba(255, 251, 214, .42)" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="29" cy="41" r="3" fill="rgba(255, 251, 214, .6)"/>
+          <circle cx="47" cy="41" r="3" fill="rgba(255, 251, 214, .6)"/>
+          <path d="M32 50 Q38 55 46 50" fill="none" stroke="rgba(255, 236, 110, .56)" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+
+        <g class="bg-drum bg-drum--two" transform="translate(262 432)">
+          <circle cx="38" cy="38" r="31" fill="rgba(111, 174, 184, .28)" stroke="rgba(255, 236, 110, .22)" stroke-width="3"/>
+          <path d="M18 34 Q27 14 38 35 T58 34" fill="none" stroke="rgba(255, 251, 214, .38)" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="29" cy="42" r="3" fill="rgba(255, 251, 214, .58)"/>
+          <circle cx="47" cy="42" r="3" fill="rgba(255, 251, 214, .58)"/>
+          <path d="M31 50 Q38 46 46 50" fill="none" stroke="rgba(255, 236, 110, .52)" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+
+        <path class="bg-note bg-note--one" d="M298 126 V82 H306 V118 C314 115 322 118 322 125 C322 132 314 137 306 134 C301 132 298 129 298 126 Z M306 84 C318 90 327 91 338 85 V95 C326 101 317 100 306 94 Z"/>
+        <path class="bg-note bg-note--two" d="M62 454 V414 H70 V448 C77 445 85 448 85 455 C85 462 77 466 70 464 C65 462 62 459 62 454 Z M70 416 C81 421 88 421 98 416 V425 C88 431 80 430 70 425 Z"/>
+        <path class="bg-note bg-note--three" d="M238 270 V232 H246 V263 C254 260 262 263 262 270 C262 277 254 282 246 279 C241 277 238 274 238 270 Z"/>
+
+        <path class="bg-sparkle bg-sparkle--one" d="M88 274 L94 288 L108 294 L94 300 L88 314 L82 300 L68 294 L82 288 Z"/>
+        <path class="bg-sparkle bg-sparkle--two" d="M300 326 L304 336 L314 340 L304 344 L300 354 L296 344 L286 340 L296 336 Z"/>
+        <path class="bg-sparkle bg-sparkle--three" d="M142 88 L146 98 L156 102 L146 106 L142 116 L138 106 L128 102 L138 98 Z"/>
+      </svg>
+    </div>
+
     <section id="selectScreen" class="screen select-screen" aria-labelledby="selectTitle">
       <header class="select-hero">
         <div id="selectAlpaca" class="alpaca-drum-scene" data-alpaca-drum aria-hidden="true"></div>
