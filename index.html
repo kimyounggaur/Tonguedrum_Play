@@ -95,6 +95,55 @@
       text-align: center;
     }
 
+    .alpaca-drum-scene {
+      display: inline-grid;
+      place-items: center;
+      width: 92px;
+      height: 62px;
+      margin: 0 auto 5px;
+      pointer-events: none;
+    }
+
+    .alpaca-drum-scene--small {
+      width: 54px;
+      height: 36px;
+      margin-bottom: 1px;
+    }
+
+    .alpaca-drum-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .2));
+    }
+
+    .alpaca-body {
+      animation: alpacaBob 1.6s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .alpaca-mallet-left,
+    .alpaca-mallet-right {
+      transform-box: fill-box;
+      transform-origin: 50% 86%;
+    }
+
+    .alpaca-mallet-left {
+      animation: alpacaMalletLeft .72s ease-in-out infinite;
+    }
+
+    .alpaca-mallet-right {
+      animation: alpacaMalletRight .72s ease-in-out infinite .18s;
+    }
+
+    .alpaca-drum-glow {
+      animation: alpacaDrumGlow .72s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
     .kicker {
       margin: 0 0 8px;
       color: var(--teal);
@@ -287,6 +336,12 @@
       margin-top: 2px;
       color: var(--muted);
       font-size: .74rem;
+    }
+
+    .play-title .alpaca-drum-scene {
+      display: inline-grid;
+      overflow: visible;
+      white-space: normal;
     }
 
     .volume-control {
@@ -642,6 +697,52 @@
       }
     }
 
+    @keyframes alpacaBob {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-2px);
+      }
+    }
+
+    @keyframes alpacaMalletLeft {
+      0%,
+      100% {
+        transform: rotate(-13deg);
+      }
+
+      42% {
+        transform: rotate(18deg) translateY(2px);
+      }
+    }
+
+    @keyframes alpacaMalletRight {
+      0%,
+      100% {
+        transform: rotate(12deg);
+      }
+
+      42% {
+        transform: rotate(-18deg) translateY(2px);
+      }
+    }
+
+    @keyframes alpacaDrumGlow {
+      0%,
+      100% {
+        opacity: .28;
+        transform: scale(.92);
+      }
+
+      48% {
+        opacity: .86;
+        transform: scale(1.04);
+      }
+    }
+
     @keyframes tongueOutlinePulse {
       0% {
         box-shadow: inset 0 0 0 rgba(255, 210, 122, .12);
@@ -773,6 +874,10 @@
       .tongue-hit::before,
       .tongue-hit::after,
       .tongue-svg,
+      .alpaca-body,
+      .alpaca-mallet-left,
+      .alpaca-mallet-right,
+      .alpaca-drum-glow,
       .tongue-hit.is-playing::after {
         transform: none;
       }
@@ -783,6 +888,7 @@
   <div id="app">
     <section id="selectScreen" class="screen select-screen" aria-labelledby="selectTitle">
       <header class="select-hero">
+        <div id="selectAlpaca" class="alpaca-drum-scene" data-alpaca-drum aria-hidden="true"></div>
         <p class="kicker">Steel Tongue Drum</p>
         <h1 id="selectTitle">스틸 텅드럼 연주하기</h1>
         <p>연주할 텅드럼을 골라주세요</p>
@@ -815,6 +921,7 @@
       <header class="play-topbar">
         <button id="backButton" class="back-button" type="button">← 다시 선택</button>
         <div class="play-title">
+          <span id="playAlpaca" class="alpaca-drum-scene alpaca-drum-scene--small" data-alpaca-drum aria-hidden="true"></span>
           <strong id="playTitle">스틸 텅드럼</strong>
           <span id="playSubtitle">C Major</span>
         </div>
@@ -852,6 +959,40 @@
 
       const root = typeof window !== "undefined" ? window : globalThis;
       const SVG_NS = "http" + "://www.w3.org/2000/svg";
+      const ALPACA_SVG = `
+        <svg class="alpaca-drum-svg" viewBox="0 0 160 104" focusable="false">
+          <g class="alpaca-body">
+            <ellipse cx="80" cy="88" rx="34" ry="8" fill="rgba(0,0,0,.14)"/>
+            <rect x="51" y="39" width="58" height="47" rx="24" fill="#f7e5cf"/>
+            <circle cx="61" cy="37" r="15" fill="#f7e5cf"/>
+            <circle cx="99" cy="37" r="15" fill="#f7e5cf"/>
+            <circle cx="61" cy="37" r="8" fill="#fff3dc"/>
+            <circle cx="99" cy="37" r="8" fill="#fff3dc"/>
+            <ellipse cx="80" cy="38" rx="34" ry="30" fill="#f7e5cf"/>
+            <ellipse cx="80" cy="46" rx="21" ry="18" fill="#fff3dc"/>
+            <circle cx="69" cy="36" r="3.4" fill="#382338"/>
+            <circle cx="91" cy="36" r="3.4" fill="#382338"/>
+            <path d="M77 45 Q80 48 83 45" fill="none" stroke="#8f5d6b" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M54 76 Q46 85 38 78" fill="none" stroke="#f7e5cf" stroke-width="8" stroke-linecap="round"/>
+            <path d="M106 76 Q114 85 122 78" fill="none" stroke="#f7e5cf" stroke-width="8" stroke-linecap="round"/>
+            <line x1="64" y1="79" x2="62" y2="92" stroke="#f7e5cf" stroke-width="8" stroke-linecap="round"/>
+            <line x1="96" y1="79" x2="98" y2="92" stroke="#f7e5cf" stroke-width="8" stroke-linecap="round"/>
+          </g>
+          <g class="alpaca-drum">
+            <ellipse class="alpaca-drum-glow" cx="80" cy="72" rx="32" ry="18" fill="rgba(255,210,122,.36)"/>
+            <ellipse cx="80" cy="72" rx="28" ry="16" fill="#eaa2d2" stroke="#9f5f98" stroke-width="4"/>
+            <path d="M58 72 H102 M66 63 V80 M80 61 V82 M94 63 V80" stroke="#b46aa7" stroke-width="2.2" stroke-linecap="round"/>
+          </g>
+          <g class="alpaca-mallet-left">
+            <line x1="54" y1="48" x2="68" y2="66" stroke="#644b6d" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="68" cy="66" r="5" fill="#ffd36a" stroke="#8f6b38" stroke-width="2"/>
+          </g>
+          <g class="alpaca-mallet-right">
+            <line x1="106" y1="48" x2="92" y2="66" stroke="#644b6d" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="92" cy="66" r="5" fill="#ffd36a" stroke="#8f6b38" stroke-width="2"/>
+          </g>
+        </svg>
+      `;
 
       const NOTE = {
         E3: { freq: 164.81, midi: 52, num: ".3", ko: "낮은 미" },
@@ -1220,7 +1361,12 @@
         mappingGrid: document.getElementById("mappingGrid"),
         recentNote: document.getElementById("recentNote"),
         ariaLive: document.getElementById("ariaLive"),
+        alpacas: [...document.querySelectorAll("[data-alpaca-drum]")],
       };
+
+      els.alpacas.forEach((target) => {
+        target.innerHTML = ALPACA_SVG;
+      });
 
       function addRipple(button, event) {
         const rect = button.getBoundingClientRect();

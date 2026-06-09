@@ -119,6 +119,12 @@ for (const asset of ["assets/char-11.png", "assets/char-15.png"]) {
 assert.match(html, /id="app"/, "app root should be present");
 assert.match(html, /id="selectScreen"/, "select screen should be present");
 assert.match(html, /id="playScreen"/, "play screen should be present");
+assert.match(html, /id="selectAlpaca"/, "select header should include the alpaca tongue drum animation");
+assert.match(html, /id="playAlpaca"/, "play header should include the alpaca tongue drum animation");
+assert.match(html, /\.alpaca-drum-scene/, "alpaca animation should be styled");
+assert.match(html, /@keyframes alpacaMalletLeft/, "left alpaca mallet should animate");
+assert.match(html, /@keyframes alpacaMalletRight/, "right alpaca mallet should animate");
+assert.match(html, /@keyframes alpacaDrumGlow/, "alpaca tongue drum should glow while being played");
 assert.match(html, /@media \(max-width: 430px\)/, "narrow screens should have a compact play topbar");
 assert.doesNotMatch(html, /<script\s+src=/i, "app should not load external scripts");
 assert.doesNotMatch(html, /https?:\/\//i, "app should not depend on remote resources");
