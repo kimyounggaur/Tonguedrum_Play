@@ -1,0 +1,8 @@
+.codex-remote-attachments/
+.git/
+.github/
+screenshots/
+tests/
+docs/
+*.md
+*Source/

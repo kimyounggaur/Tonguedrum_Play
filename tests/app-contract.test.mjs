@@ -135,11 +135,10 @@ assert.match(html, /\.bg-wave/, "background should include animated musical wave
 assert.match(html, /document\.startViewTransition/, "screen changes should use the Motion Lab view-transition pattern when supported");
 assert.match(html, /function runScreenTransition/, "screen transition fallback should be centralized");
 assert.match(html, /@keyframes screenPopIn/, "screen transition fallback should have a CSS pop-in animation");
-assert.match(html, /class="note-burst-layer"/, "play screen should include a non-interactive note burst layer");
-assert.match(html, /\.note-burst-layer[\s\S]*?pointer-events:\s*none/, "note burst layer should not block tongue hit areas");
-assert.match(html, /@keyframes noteBurstPop/, "note bursts should use a lightweight CSS animation");
-assert.match(html, /function createNoteBurst/, "note play feedback should create Motion Lab style micro bursts");
-assert.match(html, /createNoteBurst\(noteId\)/, "note bursts should run when a tongue is played");
+assert.doesNotMatch(html, /class="note-burst-layer"|function createNoteBurst|noteBurstPop/, "note play feedback should not use an unclipped stage-level burst layer");
+assert.match(html, /@keyframes tongueSparkBurst/, "note play feedback should use a clipped tongue-local spark animation");
+assert.match(html, /setAttribute\("class", "tongue-spark-group"\)/, "tongue SVG should render sparks inside the clipped effects group");
+assert.match(html, /setAttribute\("class", `tongue-spark tongue-spark--\$\{sparkName\}`\)/, "tongue sparks should be assigned inside the SVG clip path");
 assert.match(html, /@media \(max-width: 430px\)/, "narrow screens should have a compact play topbar");
 assert.doesNotMatch(html, /<script\s+src=/i, "app should not load external scripts");
 assert.doesNotMatch(html, /https?:\/\//i, "app should not depend on remote resources");
@@ -224,6 +223,7 @@ assert.match(html, /animation:\s*tongueWaveRipple/, "wave ripple animation shoul
 assert.doesNotMatch(html, /\.tongue-hit::after[\s\S]*?inset:\s*-/, "tongue glow should not expand outside the slit hit area");
 assert.doesNotMatch(html, /@keyframes tongueGlowWave[\s\S]*?scale\(1\./, "tongue glow wave should stay inside the slit outline");
 assert.doesNotMatch(html, /@keyframes tongueOutlineWave[\s\S]*?0 0 0 \d+px/, "outline wave should not cast an outside spread beyond the slit");
+assert.match(html, /\.tongue-hit:focus-visible\s*\{[\s\S]*?outline:\s*0/, "tongue focus should rely on clipped SVG feedback instead of an outside browser outline");
 assert.match(html, /\.tongue-svg/, "tongue buttons should include an SVG animation layer");
 assert.match(html, /setAttribute\("class", "tongue-svg"\)/, "tongue buttons should render SVG animation markup with mobile-safe class assignment");
 assert.match(html, /setAttribute\("class", "tongue-clip"\)/, "tongue SVG should define a clipPath for the slit outline");
@@ -233,6 +233,7 @@ assert.match(html, /setAttribute\("class", "tongue-glow-fill"\)/, "tongue SVG sh
 assert.match(html, /setAttribute\("class", "tongue-wave-path tongue-wave-path--one"\)/, "tongue SVG should render a clipped wave ripple path");
 assert.match(html, /setAttribute\("class", "tongue-wave-path tongue-wave-path--two"\)/, "tongue SVG should render a second staggered wave ripple path");
 assert.match(html, /setAttribute\("class", "tongue-outline-path"\)/, "tongue SVG should render the slit outline path");
+assert.match(html, /outline\.setAttribute\("class", "tongue-outline-path"\)[\s\S]*?clipped\.appendChild\(outline\)/, "tongue outline should be clipped to the slit effects group");
 assert.doesNotMatch(html, /\.className = "tongue-(?:svg|clip|clipped-effects|glow-fill|wave-path|svg-path|outline-path)"/, "SVG elements should avoid className assignment for mobile Safari compatibility");
 assert.match(html, /@keyframes tongueSvgTrace/, "tongue SVG stroke should animate dynamically");
 assert.match(html, /\.tongue-hit:focus-visible \.tongue-svg,[\s\S]*?\.tongue-hit:active \.tongue-svg,[\s\S]*?\.tongue-hit\.is-playing \.tongue-svg/, "SVG animation should appear for focus, active, and playing states");

@@ -523,39 +523,6 @@
       -webkit-user-drag: none;
     }
 
-    .note-burst-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 4;
-      overflow: visible;
-      pointer-events: none;
-    }
-
-    .note-burst-dot {
-      position: absolute;
-      left: var(--x);
-      top: var(--y);
-      width: var(--size, 7px);
-      height: var(--size, 7px);
-      border-radius: 999px;
-      background:
-        radial-gradient(circle, rgba(255, 255, 236, .98) 0 32%, rgba(255, 236, 92, .92) 38% 72%, transparent 74%);
-      box-shadow:
-        0 0 8px rgba(255, 244, 112, .74),
-        0 0 16px rgba(255, 194, 58, .38);
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(.35);
-      animation: noteBurstPop .74s cubic-bezier(.2, .8, .2, 1) forwards;
-      animation-delay: var(--delay, 0ms);
-      mix-blend-mode: screen;
-    }
-
-    .note-burst-dot--soft {
-      background:
-        radial-gradient(circle, rgba(255, 251, 202, .88) 0 38%, rgba(255, 184, 72, .7) 44% 68%, transparent 72%);
-      filter: blur(.15px);
-    }
-
     .tongue-layer {
       position: absolute;
       inset: 0;
@@ -574,6 +541,10 @@
       cursor: pointer;
       touch-action: manipulation;
       transform: translate(-50%, -50%) rotate(var(--rot));
+    }
+
+    .tongue-hit:focus-visible {
+      outline: 0;
     }
 
     .tongue-label {
@@ -668,6 +639,40 @@
       stroke-dasharray: 4 10;
     }
 
+    .tongue-spark {
+      fill: rgba(255, 249, 172, .96);
+      opacity: 0;
+      filter:
+        drop-shadow(0 0 4px rgba(255, 248, 166, .88))
+        drop-shadow(0 0 8px rgba(255, 204, 54, .50));
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .tongue-spark--one {
+      --tx: -13px;
+      --ty: -9px;
+      --delay: 0ms;
+    }
+
+    .tongue-spark--two {
+      --tx: 14px;
+      --ty: -11px;
+      --delay: 46ms;
+    }
+
+    .tongue-spark--three {
+      --tx: -10px;
+      --ty: 12px;
+      --delay: 92ms;
+    }
+
+    .tongue-spark--four {
+      --tx: 12px;
+      --ty: 10px;
+      --delay: 138ms;
+    }
+
     .tongue-svg-path {
       fill: none;
       stroke: rgba(255, 255, 232, 1);
@@ -738,6 +743,13 @@
       animation-delay: -.38s;
     }
 
+    .tongue-hit:focus-visible .tongue-spark,
+    .tongue-hit:active .tongue-spark,
+    .tongue-hit.is-playing .tongue-spark {
+      animation: tongueSparkBurst .68s cubic-bezier(.2, .8, .2, 1) infinite;
+      animation-delay: var(--delay);
+    }
+
     .tongue-hit:hover .tongue-label,
     .tongue-hit:focus-visible .tongue-label {
       opacity: 1;
@@ -759,8 +771,10 @@
 
     .tongue-hit:active .tongue-glow-fill,
     .tongue-hit:active .tongue-wave-path,
+    .tongue-hit:active .tongue-spark,
     .tongue-hit.is-playing .tongue-glow-fill,
-    .tongue-hit.is-playing .tongue-wave-path {
+    .tongue-hit.is-playing .tongue-wave-path,
+    .tongue-hit.is-playing .tongue-spark {
       animation-duration: .72s;
     }
 
@@ -913,20 +927,20 @@
       }
     }
 
-    @keyframes noteBurstPop {
+    @keyframes tongueSparkBurst {
       0% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(.28);
+        transform: translate(0, 0) scale(.24);
       }
 
-      18% {
+      24% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translate(0, 0) scale(1);
       }
 
       100% {
         opacity: 0;
-        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(.12);
+        transform: translate(var(--tx), var(--ty)) scale(.12);
       }
     }
 
@@ -1191,7 +1205,7 @@
       .tongue-hit::after,
       .tongue-svg,
       .tongue-wave-path,
-      .note-burst-dot,
+      .tongue-spark,
       .alpaca-body,
       .alpaca-mallet-left,
       .alpaca-mallet-right,
@@ -1288,7 +1302,6 @@
         <div id="drumStage" class="drum-stage" style="--stage-aspect: 1 / 1;">
           <img id="drumPhoto" class="drum-photo" src="assets/play-11.png" alt="11키 스틸 텅드럼">
           <div id="tongueLayer" class="tongue-layer" aria-label="텅드럼 연주 영역"></div>
-          <div id="noteBurstLayer" class="note-burst-layer" aria-hidden="true"></div>
         </div>
       </main>
 
@@ -1711,7 +1724,6 @@
         drumStage: document.getElementById("drumStage"),
         drumPhoto: document.getElementById("drumPhoto"),
         tongueLayer: document.getElementById("tongueLayer"),
-        noteBurstLayer: document.getElementById("noteBurstLayer"),
         volumeSlider: document.getElementById("volumeSlider"),
         guideToggle: document.getElementById("guideToggle"),
         guideDetails: document.getElementById("guideDetails"),
@@ -1771,7 +1783,6 @@
         state.currentType = null;
         clearTimeout(state.selectedTimer);
         resetCards();
-        els.noteBurstLayer.innerHTML = "";
         els.playScreen.hidden = true;
         els.selectScreen.hidden = false;
         els.cards[0]?.focus({ preventScroll: true });
@@ -1792,7 +1803,6 @@
         renderTongues(type);
         renderMapping(type);
         showRecentNote(null);
-        els.noteBurstLayer.innerHTML = "";
 
         els.selectScreen.hidden = true;
         els.playScreen.hidden = false;
@@ -1870,16 +1880,32 @@
           const waveTwo = document.createElementNS(SVG_NS, "path");
           waveTwo.setAttribute("class", "tongue-wave-path tongue-wave-path--two");
           waveTwo.setAttribute("d", SLIT_TRACE_PATH);
-          clipped.appendChild(waveTwo);
+        clipped.appendChild(waveTwo);
+          const sparkGroup = document.createElementNS(SVG_NS, "g");
+          sparkGroup.setAttribute("class", "tongue-spark-group");
+          [
+            ["one", 45, 46, 2.2],
+            ["two", 55, 45, 1.9],
+            ["three", 46, 61, 1.8],
+            ["four", 56, 60, 2.1],
+          ].forEach(([sparkName, cx, cy, radius]) => {
+            const spark = document.createElementNS(SVG_NS, "circle");
+            spark.setAttribute("class", `tongue-spark tongue-spark--${sparkName}`);
+            spark.setAttribute("cx", cx);
+            spark.setAttribute("cy", cy);
+            spark.setAttribute("r", radius);
+            sparkGroup.appendChild(spark);
+          });
+          clipped.appendChild(sparkGroup);
           const trace = document.createElementNS(SVG_NS, "path");
           trace.setAttribute("class", "tongue-svg-path");
           trace.setAttribute("d", SLIT_TRACE_PATH);
           clipped.appendChild(trace);
-          svg.appendChild(clipped);
           const outline = document.createElementNS(SVG_NS, "path");
           outline.setAttribute("class", "tongue-outline-path");
           outline.setAttribute("d", SLIT_TRACE_PATH);
-          svg.appendChild(outline);
+          clipped.appendChild(outline);
+          svg.appendChild(clipped);
           button.appendChild(svg);
           button.addEventListener("pointerdown", (event) => {
             event.preventDefault();
@@ -1916,33 +1942,8 @@
         const pan = position ? (position.x - 50) / 50 : 0;
         playNote(noteId, { pan });
         flashTongue(noteId);
-        createNoteBurst(noteId);
         showRecentNote(noteId);
         updateAriaLive(noteId);
-      }
-
-      function createNoteBurst(noteId) {
-        if (shouldReduceMotion() || !els.noteBurstLayer) return;
-        const type = state.currentType;
-        const position = type && POS[type] ? POS[type][noteId] : null;
-        if (!position) return;
-        const count = 10;
-        for (let i = 0; i < count; i += 1) {
-          const dot = document.createElement("span");
-          const angle = (i / count * Math.PI * 2) + (Math.random() - .5) * .32;
-          const distance = 24 + (i % 4) * 8;
-          const size = 5 + (i % 3) * 2;
-          dot.className = `note-burst-dot${i % 2 ? " note-burst-dot--soft" : ""}`;
-          dot.style.setProperty("--x", `${position.x}%`);
-          dot.style.setProperty("--y", `${position.y}%`);
-          dot.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
-          dot.style.setProperty("--ty", `${Math.sin(angle) * distance}px`);
-          dot.style.setProperty("--size", `${size}px`);
-          dot.style.setProperty("--delay", `${i * 12}ms`);
-          els.noteBurstLayer.appendChild(dot);
-          dot.addEventListener("animationend", () => dot.remove(), { once: true });
-          setTimeout(() => dot.remove(), 950);
-        }
       }
 
       function flashTongue(noteId) {
