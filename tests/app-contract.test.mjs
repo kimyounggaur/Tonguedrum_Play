@@ -190,6 +190,12 @@ assert.equal(api.DRUMS["11"].playImage, "assets/play-11.png");
 assert.equal(api.DRUMS["15"].playImage, "assets/play-15.png");
 assert.match(html, /\.tongue-label/, "tongue hover labels should be styled");
 assert.match(html, /className = "tongue-label"/, "tongue buttons should render hover labels");
+assert.match(html, /@keyframes tongueOutlinePulse/, "tongue hover outline should pulse dynamically");
+assert.match(html, /@keyframes tongueGlowPulse/, "tongue glow should pulse dynamically");
+assert.match(html, /\.tongue-hit:hover::before,[\s\S]*?\.tongue-hit:focus-visible::before,[\s\S]*?\.tongue-hit:active::before/, "hover, focus, and active states should share the outline pulse");
+assert.match(html, /\.tongue-hit:hover::after,[\s\S]*?\.tongue-hit:focus-visible::after,[\s\S]*?\.tongue-hit:active::after,[\s\S]*?\.tongue-hit\.is-playing::after/, "hover, focus, active, and playing states should share the glow pulse");
+assert.match(html, /animation:\s*tongueOutlinePulse/, "outline pulse animation should be applied");
+assert.match(html, /animation:\s*tongueGlowPulse/, "glow pulse animation should be applied");
 assert.equal(typeof api.hoverLabelOf, "function");
 for (const noteId of api.NOTES_15) {
   const hoverLabel = api.hoverLabelOf(noteId);
