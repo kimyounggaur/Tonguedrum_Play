@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102028">
+  <title>스틸 텅드럼 연주하기</title>
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <style>
+    :root {
+      --bg: #102028;
+      --panel: #173039;
+      --panel-strong: #203f49;
+      --teal: #5aa7a0;
+      --teal-dark: #367c76;
+      --bronze: #c58a3d;
+      --steel: #6faeb8;
+      --glow: #ffd27a;
+      --ink: #f2ece0;
+      --muted: #9fb2b6;
+      --shadow: rgba(0, 0, 0, .34);
+      --accent: var(--teal);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--ink);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+      background:
+        linear-gradient(135deg, rgba(197, 138, 61, .16), transparent 24%),
+        linear-gradient(225deg, rgba(111, 174, 184, .18), transparent 28%),
+        linear-gradient(180deg, #172c33 0%, #0c1418 62%, #0b1114 100%);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    #app {
+      position: relative;
+      width: min(100vw, calc(100dvh * 9 / 16));
+      height: min(100dvh, calc(100vw * 16 / 9));
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        linear-gradient(180deg, rgba(90, 167, 160, .13) 0%, transparent 24%),
+        linear-gradient(180deg, #152a31 0%, var(--bg) 54%, #11242d 100%);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .46);
+      container-type: size;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .screen[hidden] {
+      display: none;
+    }
+
+    .select-screen {
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      gap: 16px;
+    }
+
+    .select-hero {
+      flex: 0 0 auto;
+      padding-top: 6px;
+      text-align: center;
+    }
+
+    .kicker {
+      margin: 0 0 8px;
+      color: var(--teal);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.86rem;
+      line-height: 1.16;
+      letter-spacing: 0;
+    }
+
+    .select-hero p:last-child {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: .98rem;
+    }
+
+    .select-cards {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .drum-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(112px, 42%) 1fr;
+      align-items: center;
+      min-height: 0;
+      overflow: hidden;
+      padding: 14px;
+      border: 1px solid rgba(242, 236, 224, .13);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 25%, transparent), transparent 38%),
+        linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .025)),
+        var(--panel);
+      box-shadow: 0 18px 34px var(--shadow);
+      cursor: pointer;
+      transition: transform .26s ease, border-color .26s ease, opacity .26s ease, box-shadow .26s ease;
+    }
+
+    .drum-card:hover,
+    .drum-card:focus-visible {
+      border-color: color-mix(in srgb, var(--card-accent) 64%, white);
+      box-shadow: 0 22px 42px rgba(0, 0, 0, .38);
+      transform: translateY(-4px) scale(1.018);
+    }
+
+    .drum-card:active {
+      transform: translateY(-1px) scale(.985);
+    }
+
+    .drum-card.is-dimmed {
+      opacity: .45;
+    }
+
+    .drum-card.is-selected {
+      border-color: color-mix(in srgb, var(--card-accent) 72%, white);
+    }
+
+    .card-media {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      max-height: 210px;
+      object-fit: contain;
+      filter: drop-shadow(0 14px 16px rgba(0, 0, 0, .22));
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .card-copy {
+      min-width: 0;
+      padding-left: 12px;
+      text-align: left;
+    }
+
+    .card-label {
+      display: block;
+      color: color-mix(in srgb, var(--card-accent) 78%, white);
+      font-size: 1.22rem;
+      font-weight: 850;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .card-sub {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.42;
+    }
+
+    .ripple {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 210, 122, .45);
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(1);
+      animation: ripple .42s ease-out forwards;
+    }
+
+    .play-screen {
+      padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+      gap: 8px;
+    }
+
+    .play-topbar {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 6px;
+      border: 1px solid rgba(242, 236, 224, .11);
+      border-radius: 8px;
+      background: rgba(16, 32, 40, .78);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .22);
+    }
+
+    .back-button,
+    .guide-toggle {
+      min-height: 36px;
+      border: 0;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--accent) 24%, #102028);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: .88rem;
+      font-weight: 780;
+      transition: transform .2s ease, background .2s ease;
+    }
+
+    .back-button {
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    .back-button:hover,
+    .guide-toggle:hover {
+      background: color-mix(in srgb, var(--accent) 38%, #102028);
+    }
+
+    .back-button:active,
+    .guide-toggle:active {
+      transform: scale(.96);
+    }
+
+    .play-title {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .play-title strong,
+    .play-title span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .play-title strong {
+      color: color-mix(in srgb, var(--accent) 72%, white);
+      font-size: .98rem;
+      letter-spacing: 0;
+    }
+
+    .play-title span {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: .74rem;
+    }
+
+    .volume-control {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+      padding: 0 4px 2px;
+      color: var(--muted);
+      font-size: .76rem;
+      white-space: nowrap;
+    }
+
+    .volume-control span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .volume-control input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 20px;
+      background: transparent;
+      accent-color: var(--accent);
+    }
+
+    .volume-control input::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 48%, #0d1b21);
+    }
+
+    .volume-control input::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: -5px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
+    }
+
+    .volume-control input::-moz-range-track {
+      height: 4px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 48%, #0d1b21);
+    }
+
+    .volume-control input::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
+    }
+
+    .play-main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 4px 2px;
+    }
+
+    .drum-stage {
+      position: relative;
+      width: min(96%, 360px);
+      aspect-ratio: var(--stage-aspect, 1 / 1);
+      max-width: 96%;
+      max-height: 100%;
+      margin: auto;
+    }
+
+    .drum-photo {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .30));
+      user-select: none;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
+    .tongue-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .tongue-hit {
+      position: absolute;
+      width: var(--w);
+      height: var(--h);
+      min-width: 36px;
+      min-height: 36px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .001);
+      cursor: pointer;
+      touch-action: manipulation;
+      transform: translate(-50%, -50%) rotate(var(--rot));
+    }
+
+    .tongue-hit::before {
+      content: "";
+      position: absolute;
+      inset: 3%;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 210, 122, 0);
+      transition: border-color .14s ease;
+    }
+
+    .tongue-hit::after {
+      content: "";
+      position: absolute;
+      inset: 6%;
+      border-radius: inherit;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(255, 210, 122, .82), rgba(255, 210, 122, .18) 58%, transparent 74%);
+      box-shadow: 0 0 30px rgba(255, 210, 122, .72);
+      transition: opacity .16s ease, transform .35s ease;
+    }
+
+    .tongue-hit:hover::before,
+    .tongue-hit:focus-visible::before {
+      border-color: rgba(255, 210, 122, .5);
+    }
+
+    .tongue-hit.is-playing::after {
+      opacity: 1;
+      transform: scale(1.18);
+    }
+
+    .play-footer {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 9px;
+      border: 1px solid rgba(242, 236, 224, .11);
+      border-radius: 8px;
+      background: rgba(16, 32, 40, .82);
+      box-shadow: 0 -6px 26px rgba(0, 0, 0, .18);
+    }
+
+    .guide-copy {
+      min-width: 0;
+    }
+
+    .guide-summary {
+      color: var(--ink);
+      font-size: .82rem;
+      font-weight: 720;
+      line-height: 1.34;
+    }
+
+    .recent-note {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      margin-top: 6px;
+      padding: 4px 9px;
+      border: 1px solid rgba(255, 210, 122, .25);
+      border-radius: 999px;
+      color: var(--glow);
+      background: rgba(255, 210, 122, .08);
+      font-size: .8rem;
+      opacity: 0;
+      transform: translateY(3px);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+
+    .recent-note.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .guide-toggle {
+      align-self: start;
+      padding: 0 10px;
+    }
+
+    .guide-details {
+      grid-column: 1 / -1;
+      min-height: 0;
+    }
+
+    .guide-details[hidden] {
+      display: none;
+    }
+
+    .mapping-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      max-height: 110px;
+      overflow: auto;
+      padding-top: 7px;
+    }
+
+    .map-chip {
+      min-width: 0;
+      padding: 6px 7px;
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .055);
+      font-size: .72rem;
+      line-height: 1.2;
+    }
+
+    .map-chip b {
+      display: block;
+      color: color-mix(in srgb, var(--accent) 70%, white);
+      font-size: .75rem;
+      letter-spacing: 0;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(255, 210, 122, .95);
+      outline-offset: 3px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes ripple {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(46);
+      }
+    }
+
+    @media (orientation: landscape) {
+      .select-cards {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr;
+      }
+
+      .drum-card {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+        text-align: center;
+      }
+
+      .card-copy {
+        padding: 10px 0 0;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .play-topbar {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto auto;
+      }
+
+      .volume-control {
+        grid-column: 1 / -1;
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+        min-width: 0;
+        padding: 0 4px 2px;
+      }
+
+      .volume-control input {
+        width: 100%;
+      }
+    }
+
+    @media (max-height: 690px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .select-screen {
+        gap: 10px;
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .drum-card {
+        padding: 10px;
+      }
+
+      .card-label {
+        font-size: 1rem;
+      }
+
+      .card-sub,
+      .select-hero p:last-child {
+        font-size: .8rem;
+      }
+
+      .mapping-grid {
+        max-height: 76px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+
+      .tongue-hit.is-playing::after {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <section id="selectScreen" class="screen select-screen" aria-labelledby="selectTitle">
+      <header class="select-hero">
+        <p class="kicker">Steel Tongue Drum</p>
+        <h1 id="selectTitle">스틸 텅드럼 연주하기</h1>
+        <p>연주할 텅드럼을 골라주세요</p>
+      </header>
+
+      <div class="select-cards" aria-label="텅드럼 선택">
+        <button class="drum-card" type="button" data-select-type="11" style="--card-accent: var(--bronze);" aria-label="11키 스틸 텅드럼 선택">
+          <span class="card-media">
+            <img src="assets/char-11.png" alt="11키 스틸 텅드럼 캐릭터">
+          </span>
+          <span class="card-copy">
+            <span class="card-label">11키 스틸 텅드럼</span>
+            <span class="card-sub">G3~C5 · C Major · 가볍게</span>
+          </span>
+        </button>
+
+        <button class="drum-card" type="button" data-select-type="15" style="--card-accent: var(--steel);" aria-label="15키 스틸 텅드럼 선택">
+          <span class="card-media">
+            <img src="assets/char-15.png" alt="15키 스틸 텅드럼 캐릭터">
+          </span>
+          <span class="card-copy">
+            <span class="card-label">15키 스틸 텅드럼</span>
+            <span class="card-sub">E3~E5 · C Major · 넓은 음역</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section id="playScreen" class="screen play-screen" hidden aria-labelledby="playTitle">
+      <header class="play-topbar">
+        <button id="backButton" class="back-button" type="button">← 다시 선택</button>
+        <div class="play-title">
+          <strong id="playTitle">스틸 텅드럼</strong>
+          <span id="playSubtitle">C Major</span>
+        </div>
+        <label class="volume-control">
+          <span>볼륨</span>
+          <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.82" aria-label="볼륨">
+        </label>
+      </header>
+
+      <main id="playMain" class="play-main">
+        <div id="drumStage" class="drum-stage" style="--stage-aspect: 1 / 1;">
+          <img id="drumPhoto" class="drum-photo" src="assets/play-11.png" alt="11키 스틸 텅드럼">
+          <div id="tongueLayer" class="tongue-layer" aria-label="텅드럼 연주 영역"></div>
+        </div>
+      </main>
+
+      <footer class="play-footer">
+        <div class="guide-copy">
+          <div class="guide-summary">숫자=가운데 · Shift+숫자=높은음 · Ctrl+숫자=낮은음</div>
+          <div id="recentNote" class="recent-note" aria-hidden="true">도 · C4 · 1</div>
+        </div>
+        <button id="guideToggle" class="guide-toggle" type="button" aria-expanded="false" aria-controls="guideDetails">매핑표</button>
+        <div id="guideDetails" class="guide-details" hidden>
+          <div id="mappingGrid" class="mapping-grid" aria-label="키 매핑표"></div>
+        </div>
+      </footer>
+
+      <div id="ariaLive" class="sr-only" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const root = typeof window !== "undefined" ? window : globalThis;
+
+      const NOTE = {
+        E3: { freq: 164.81, midi: 52, num: ".3", ko: "낮은 미" },
+        F3: { freq: 174.61, midi: 53, num: ".4", ko: "낮은 파" },
+        G3: { freq: 196.00, midi: 55, num: ".5", ko: "낮은 솔" },
+        A3: { freq: 220.00, midi: 57, num: ".6", ko: "낮은 라" },
+        B3: { freq: 246.94, midi: 59, num: ".7", ko: "낮은 시" },
+        C4: { freq: 261.63, midi: 60, num: "1", ko: "도" },
+        D4: { freq: 293.66, midi: 62, num: "2", ko: "레" },
+        E4: { freq: 329.63, midi: 64, num: "3", ko: "미" },
+        F4: { freq: 349.23, midi: 65, num: "4", ko: "파" },
+        G4: { freq: 392.00, midi: 67, num: "5", ko: "솔" },
+        A4: { freq: 440.00, midi: 69, num: "6", ko: "라" },
+        B4: { freq: 493.88, midi: 71, num: "7", ko: "시" },
+        C5: { freq: 523.25, midi: 72, num: "1'", ko: "높은 도" },
+        D5: { freq: 587.33, midi: 74, num: "2'", ko: "높은 레" },
+        E5: { freq: 659.25, midi: 76, num: "3'", ko: "높은 미" },
+      };
+
+      const NOTES_11 = ["G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+      const NOTES_15 = ["E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5"];
+
+      const MAP = {
+        MID: { 1: "C4", 2: "D4", 3: "E4", 4: "F4", 5: "G4", 6: "A4", 7: "B4" },
+        HIGH: { 1: "C5", 2: "D5", 3: "E5" },
+        LOW: { 3: "E3", 4: "F3", 5: "G3", 6: "A3", 7: "B3" },
+      };
+
+      const POS_11_BASE = {
+        G3: { x: 50.0, y: 48.0, w: 20.0, h: 22.0, rot: "0deg" },
+        A3: { x: 50.0, y: 84.0, w: 14.6, h: 20.7, rot: "180deg" },
+        B3: { x: 30.0, y: 77.5, w: 14.3, h: 20.4, rot: "216deg" },
+        C4: { x: 30.0, y: 22.5, w: 14.1, h: 20.3, rot: "324deg" },
+        D4: { x: 70.0, y: 22.5, w: 13.8, h: 20.0, rot: "36deg" },
+        E4: { x: 17.7, y: 39.5, w: 13.4, h: 19.7, rot: "288deg" },
+        F4: { x: 82.3, y: 39.5, w: 13.2, h: 19.5, rot: "72deg" },
+        G4: { x: 17.7, y: 60.5, w: 12.9, h: 19.2, rot: "252deg" },
+        A4: { x: 82.3, y: 60.5, w: 12.5, h: 18.9, rot: "108deg" },
+        B4: { x: 50.0, y: 16.0, w: 12.2, h: 18.6, rot: "0deg" },
+        C5: { x: 70.0, y: 77.5, w: 12.0, h: 18.5, rot: "144deg" },
+      };
+
+      const POS_15_BASE = {
+        E3: { x: 50.0, y: 48.0, w: 20.0, h: 22.0, rot: "0deg" },
+        F3: { x: 50.0, y: 84.0, w: 14.9, h: 20.9, rot: "180deg" },
+        G3: { x: 23.4, y: 71.2, w: 14.6, h: 20.7, rot: "231deg" },
+        A3: { x: 76.6, y: 71.2, w: 14.4, h: 20.5, rot: "129deg" },
+        B3: { x: 16.9, y: 57.6, w: 14.1, h: 20.3, rot: "257deg" },
+        C4: { x: 83.1, y: 42.4, w: 14.0, h: 20.2, rot: "77deg" },
+        D4: { x: 35.2, y: 19.4, w: 13.8, h: 20.0, rot: "334deg" },
+        E4: { x: 64.8, y: 19.4, w: 13.5, h: 19.8, rot: "26deg" },
+        F4: { x: 64.8, y: 80.6, w: 13.4, h: 19.6, rot: "154deg" },
+        G4: { x: 35.2, y: 80.6, w: 13.1, h: 19.4, rot: "206deg" },
+        A4: { x: 83.1, y: 57.6, w: 12.9, h: 19.2, rot: "103deg" },
+        B4: { x: 16.9, y: 42.4, w: 12.6, h: 19.0, rot: "283deg" },
+        C5: { x: 76.6, y: 28.8, w: 12.5, h: 18.9, rot: "51deg" },
+        D5: { x: 23.4, y: 28.8, w: 12.2, h: 18.7, rot: "309deg" },
+        E5: { x: 50.0, y: 16.0, w: 12.0, h: 18.5, rot: "0deg" },
+      };
+
+      function projectPositions(base, yOffset, yScale) {
+        const scale = yScale / 100;
+        return Object.fromEntries(Object.entries(base).map(([noteId, p]) => [
+          noteId,
+          {
+            x: p.x,
+            y: +(yOffset + p.y * scale).toFixed(2),
+            w: p.w,
+            h: +(p.h * scale).toFixed(2),
+            rot: p.rot,
+          },
+        ]));
+      }
+
+      const POS_11 = projectPositions(POS_11_BASE, 14.65, 70.70);
+      const POS_15 = projectPositions(POS_15_BASE, 0.00, 85.32);
+      const POS = { "11": POS_11, "15": POS_15 };
+
+      const DRUMS = {
+        "11": {
+          type: "11",
+          name: "11키 스틸 텅드럼",
+          range: "G3~C5",
+          scale: "C Major",
+          charImage: "assets/char-11.png",
+          playImage: "assets/play-11.png",
+          accent: "var(--bronze)",
+          aspect: "2481 / 3509",
+          stageSize: [2481, 3509],
+          notes: NOTES_11,
+        },
+        "15": {
+          type: "15",
+          name: "15키 스틸 텅드럼",
+          range: "E3~E5",
+          scale: "C Major",
+          charImage: "assets/char-15.png",
+          playImage: "assets/play-15.png",
+          accent: "var(--steel)",
+          aspect: "1563 / 1832",
+          stageSize: [1563, 1832],
+          notes: NOTES_15,
+        },
+      };
+
+      const state = {
+        currentType: null,
+        hideRecentTimer: null,
+        selectedTimer: null,
+      };
+
+      let ctx = null;
+      let master = null;
+
+      function freqFromMidi(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      function digitOf(code) {
+        const match = /^(?:Digit|Numpad)([0-9])$/.exec(code);
+        return match ? match[1] : null;
+      }
+
+      function isEditableTarget(target) {
+        if (!target || typeof Element === "undefined" || !(target instanceof Element)) return false;
+        return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+      }
+
+      function resolveShortcut(eventLike, type) {
+        if (!DRUMS[type]) return null;
+        if (eventLike.altKey || eventLike.metaKey) return null;
+        if (eventLike.shiftKey && eventLike.ctrlKey) return null;
+        const digit = digitOf(eventLike.code);
+        if (digit === null) return null;
+        const note = eventLike.shiftKey ? MAP.HIGH[digit] : eventLike.ctrlKey ? MAP.LOW[digit] : MAP.MID[digit];
+        if (!note) return null;
+        return DRUMS[type].notes.includes(note) ? note : null;
+      }
+
+      function shortcutLabelOf(noteId, type) {
+        const cfg = DRUMS[type];
+        if (!cfg || !cfg.notes.includes(noteId)) return "없음";
+        for (const [digit, note] of Object.entries(MAP.MID)) {
+          if (note === noteId) return digit;
+        }
+        for (const [digit, note] of Object.entries(MAP.HIGH)) {
+          if (note === noteId) return `Shift+${digit}`;
+        }
+        for (const [digit, note] of Object.entries(MAP.LOW)) {
+          if (note === noteId) return `Ctrl+${digit}`;
+        }
+        return "없음";
+      }
+
+      function labelOf(noteId) {
+        const note = NOTE[noteId];
+        return note ? `${note.ko} · ${noteId} · ${note.num}` : noteId;
+      }
+
+      function initialTypeFromSearch(search) {
+        const match = /(?:^\?|&)drum=(11|15)(?:&|$)/.exec(String(search || ""));
+        return match && DRUMS[match[1]] ? match[1] : null;
+      }
+
+      function ensureAudio() {
+        const AudioCtor = root.AudioContext || root.webkitAudioContext;
+        if (!AudioCtor) return null;
+        if (!ctx) {
+          ctx = new AudioCtor();
+          master = ctx.createGain();
+          master.gain.value = 0.82;
+          master.connect(ctx.destination);
+
+          const convolver = ctx.createConvolver();
+          convolver.buffer = makeIR(ctx, 2.8, 2.2);
+          const wet = ctx.createGain();
+          wet.gain.value = 0.22;
+          master.connect(wet);
+          wet.connect(convolver);
+          convolver.connect(ctx.destination);
+        }
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      }
+
+      function makeIR(audioContext, seconds, decay) {
+        const rate = audioContext.sampleRate;
+        const length = Math.max(1, Math.floor(rate * seconds));
+        const buffer = audioContext.createBuffer(2, length, rate);
+        for (let channel = 0; channel < 2; channel += 1) {
+          const data = buffer.getChannelData(channel);
+          for (let i = 0; i < length; i += 1) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+          }
+        }
+        return buffer;
+      }
+
+      function setVolume(value) {
+        const audioContext = ensureAudio();
+        if (!audioContext || !master) return;
+        const safeValue = Math.max(0, Math.min(1, Number(value)));
+        master.gain.setTargetAtTime(safeValue, audioContext.currentTime, 0.015);
+      }
+
+      function makeNoiseBurst(now, destination, amount = 0.022) {
+        const duration = 0.045;
+        const sampleCount = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < sampleCount; i += 1) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        const highpass = ctx.createBiquadFilter();
+        highpass.type = "highpass";
+        highpass.frequency.value = 900;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(amount, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        source.connect(highpass).connect(gain).connect(destination);
+        source.start(now);
+        source.stop(now + duration + 0.01);
+      }
+
+      function playNote(noteId, opts = {}) {
+        const audioContext = ensureAudio();
+        const info = NOTE[noteId];
+        if (!audioContext || !master || !info) return;
+
+        const now = audioContext.currentTime;
+        const frequency = info.freq || freqFromMidi(info.midi);
+        const decay = Math.max(2.2, 4.8 - (info.midi - 52) * 0.08);
+        const voice = audioContext.createGain();
+        voice.gain.setValueAtTime(0.0001, now);
+        voice.gain.exponentialRampToValueAtTime(0.85, now + 0.009);
+        voice.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+
+        const lowpass = audioContext.createBiquadFilter();
+        lowpass.type = "lowpass";
+        lowpass.Q.value = 0.7;
+        lowpass.frequency.setValueAtTime(Math.min(7000, frequency * 8), now);
+        lowpass.frequency.exponentialRampToValueAtTime(Math.max(420, frequency * 2.2), now + decay);
+
+        let output = lowpass;
+        if (audioContext.createStereoPanner && typeof opts.pan === "number") {
+          const panner = audioContext.createStereoPanner();
+          panner.pan.value = Math.max(-0.5, Math.min(0.5, opts.pan));
+          lowpass.connect(panner);
+          output = panner;
+        }
+        output.connect(master);
+
+        [[1.00, 1.00], [2.01, 0.40], [2.98, 0.20], [4.16, 0.10], [5.43, 0.05]].forEach(([multiple, gainValue], index) => {
+          const oscillator = audioContext.createOscillator();
+          oscillator.type = index === 0 ? "sine" : "triangle";
+          oscillator.frequency.value = frequency * multiple;
+          if (index > 0) oscillator.detune.value = index * 1.5;
+          const partialGain = audioContext.createGain();
+          partialGain.gain.setValueAtTime(gainValue, now);
+          partialGain.gain.exponentialRampToValueAtTime(0.0001, now + decay * (index === 0 ? 1 : 0.7));
+          oscillator.connect(partialGain).connect(voice);
+          oscillator.start(now);
+          oscillator.stop(now + decay + 0.08);
+        });
+
+        voice.connect(lowpass);
+        makeNoiseBurst(now, voice);
+      }
+
+      function runSelfTests() {
+        const M = (code, mods, type) => resolveShortcut({
+          code,
+          shiftKey: Boolean(mods.s),
+          ctrlKey: Boolean(mods.c),
+          altKey: Boolean(mods.a),
+          metaKey: Boolean(mods.m),
+        }, type);
+
+        console.assert(M("Digit1", {}, "11") === "C4");
+        console.assert(M("Digit7", {}, "15") === "B4");
+        console.assert(M("Digit8", {}, "15") === null);
+        console.assert(M("Digit1", { s: 1 }, "11") === "C5");
+        console.assert(M("Digit2", { s: 1 }, "11") === null);
+        console.assert(M("Digit2", { s: 1 }, "15") === "D5");
+        console.assert(M("Digit3", { s: 1 }, "15") === "E5");
+        console.assert(M("Digit4", { s: 1 }, "15") === null);
+        console.assert(M("Digit5", { c: 1 }, "11") === "G3");
+        console.assert(M("Digit3", { c: 1 }, "11") === null);
+        console.assert(M("Digit3", { c: 1 }, "15") === "E3");
+        console.assert(M("Digit4", { c: 1 }, "15") === "F3");
+        console.assert(M("Digit7", { c: 1 }, "15") === "B3");
+        console.assert(M("Digit4", { s: 1, c: 1 }, "15") === null);
+        console.assert(M("Digit1", { a: 1 }, "15") === null);
+        console.assert(M("Digit1", { m: 1 }, "15") === null);
+        console.assert(M("Numpad1", {}, "11") === "C4");
+        console.assert(NOTES_11.length === 11 && NOTES_15.length === 15);
+        console.assert(NOTES_11.every((note) => NOTE[note]) && NOTES_15.every((note) => NOTE[note]));
+        console.assert(NOTES_11.every((note) => POS_11[note]) && NOTES_15.every((note) => POS_15[note]));
+      }
+
+      root.__tongueDrumTest = {
+        NOTE,
+        NOTES_11,
+        NOTES_15,
+        MAP,
+        POS_11,
+        POS_15,
+        POS,
+        DRUMS,
+        digitOf,
+        isEditableTarget,
+        resolveShortcut,
+        shortcutLabelOf,
+        labelOf,
+        initialTypeFromSearch,
+        freqFromMidi,
+      };
+
+      runSelfTests();
+
+      if (typeof document === "undefined") return;
+
+      const els = {
+        app: document.getElementById("app"),
+        selectScreen: document.getElementById("selectScreen"),
+        playScreen: document.getElementById("playScreen"),
+        cards: [...document.querySelectorAll("[data-select-type]")],
+        backButton: document.getElementById("backButton"),
+        playTitle: document.getElementById("playTitle"),
+        playSubtitle: document.getElementById("playSubtitle"),
+        playMain: document.getElementById("playMain"),
+        drumStage: document.getElementById("drumStage"),
+        drumPhoto: document.getElementById("drumPhoto"),
+        tongueLayer: document.getElementById("tongueLayer"),
+        volumeSlider: document.getElementById("volumeSlider"),
+        guideToggle: document.getElementById("guideToggle"),
+        guideDetails: document.getElementById("guideDetails"),
+        mappingGrid: document.getElementById("mappingGrid"),
+        recentNote: document.getElementById("recentNote"),
+        ariaLive: document.getElementById("ariaLive"),
+      };
+
+      function addRipple(button, event) {
+        const rect = button.getBoundingClientRect();
+        const ripple = document.createElement("span");
+        ripple.className = "ripple";
+        ripple.style.left = `${event.clientX - rect.left}px`;
+        ripple.style.top = `${event.clientY - rect.top}px`;
+        button.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 450);
+      }
+
+      function resetCards() {
+        els.cards.forEach((card) => {
+          card.classList.remove("is-selected", "is-dimmed");
+        });
+      }
+
+      function showSelect() {
+        state.currentType = null;
+        clearTimeout(state.selectedTimer);
+        resetCards();
+        els.playScreen.hidden = true;
+        els.selectScreen.hidden = false;
+        els.cards[0]?.focus({ preventScroll: true });
+      }
+
+      function showPlay(type) {
+        const cfg = DRUMS[type];
+        if (!cfg) return;
+
+        state.currentType = type;
+        els.app.style.setProperty("--accent", cfg.accent);
+        els.playTitle.textContent = cfg.name;
+        els.playSubtitle.textContent = `${cfg.range} · ${cfg.scale}`;
+        els.drumPhoto.src = cfg.playImage;
+        els.drumPhoto.alt = cfg.name;
+        els.drumStage.style.setProperty("--stage-aspect", cfg.aspect);
+
+        renderTongues(type);
+        renderMapping(type);
+        showRecentNote(null);
+
+        els.selectScreen.hidden = true;
+        els.playScreen.hidden = false;
+        requestAnimationFrame(fitStage);
+        els.backButton.focus({ preventScroll: true });
+      }
+
+      function fitStage() {
+        const cfg = DRUMS[state.currentType];
+        if (!cfg || !els.playMain) return;
+        const rect = els.playMain.getBoundingClientRect();
+        const aspect = cfg.stageSize[0] / cfg.stageSize[1];
+        const maxWidth = rect.width * 0.96;
+        const maxHeight = rect.height * 0.98;
+        let width = maxWidth;
+        let height = width / aspect;
+        if (height > maxHeight) {
+          height = maxHeight;
+          width = height * aspect;
+        }
+        els.drumStage.style.width = `${Math.max(1, Math.round(width))}px`;
+        els.drumStage.style.height = `${Math.max(1, Math.round(height))}px`;
+      }
+
+      function renderTongues(type) {
+        const cfg = DRUMS[type];
+        els.tongueLayer.innerHTML = "";
+        cfg.notes.forEach((noteId) => {
+          const position = POS[type][noteId];
+          if (!position) return;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "tongue-hit";
+          button.dataset.note = noteId;
+          button.style.left = `${position.x}%`;
+          button.style.top = `${position.y}%`;
+          button.style.setProperty("--w", `${position.w}%`);
+          button.style.setProperty("--h", `${position.h}%`);
+          button.style.setProperty("--rot", position.rot || "0deg");
+          button.setAttribute("aria-label", `${labelOf(noteId)}, 단축키 ${shortcutLabelOf(noteId, type)}`);
+          button.addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+            button.dataset.pointerPlayed = "1";
+            triggerNote(noteId);
+            setTimeout(() => {
+              delete button.dataset.pointerPlayed;
+            }, 80);
+          });
+          button.addEventListener("click", (event) => {
+            if (button.dataset.pointerPlayed) {
+              event.preventDefault();
+              return;
+            }
+            triggerNote(noteId);
+          });
+          els.tongueLayer.appendChild(button);
+        });
+      }
+
+      function renderMapping(type) {
+        const cfg = DRUMS[type];
+        els.mappingGrid.innerHTML = "";
+        cfg.notes.forEach((noteId) => {
+          const chip = document.createElement("span");
+          chip.className = "map-chip";
+          chip.innerHTML = `<b>${shortcutLabelOf(noteId, type)}</b>${labelOf(noteId)}`;
+          els.mappingGrid.appendChild(chip);
+        });
+      }
+
+      function triggerNote(noteId) {
+        const type = state.currentType;
+        if (!type || !DRUMS[type].notes.includes(noteId)) return;
+        const position = POS[type][noteId];
+        const pan = position ? (position.x - 50) / 50 : 0;
+        playNote(noteId, { pan });
+        flashTongue(noteId);
+        showRecentNote(noteId);
+        updateAriaLive(noteId);
+      }
+
+      function flashTongue(noteId) {
+        const target = els.tongueLayer.querySelector(`.tongue-hit[data-note="${noteId}"]`);
+        if (!target) return;
+        target.classList.remove("is-playing");
+        void target.offsetWidth;
+        target.classList.add("is-playing");
+        setTimeout(() => target.classList.remove("is-playing"), 240);
+      }
+
+      function showRecentNote(noteId) {
+        clearTimeout(state.hideRecentTimer);
+        if (!noteId) {
+          els.recentNote.classList.remove("is-visible");
+          return;
+        }
+        els.recentNote.textContent = labelOf(noteId);
+        els.recentNote.classList.add("is-visible");
+        state.hideRecentTimer = setTimeout(() => {
+          els.recentNote.classList.remove("is-visible");
+        }, 1200);
+      }
+
+      function updateAriaLive(noteId) {
+        els.ariaLive.textContent = `${labelOf(noteId)} 재생`;
+      }
+
+      function enableCalibrate() {
+        if (!new URLSearchParams(location.search).get("calibrate")) return;
+        els.drumStage.addEventListener("pointerdown", (event) => {
+          const rect = els.drumStage.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width * 100).toFixed(1);
+          const y = ((event.clientY - rect.top) / rect.height * 100).toFixed(1);
+          console.log(`{ x:${x}, y:${y}, w:13, h:19, rot:'0deg' },`);
+        }, { capture: true });
+      }
+
+      els.cards.forEach((card) => {
+        card.addEventListener("click", (event) => {
+          clearTimeout(state.selectedTimer);
+          addRipple(card, event);
+          const type = card.dataset.selectType;
+          els.cards.forEach((other) => {
+            other.classList.toggle("is-selected", other === card);
+            other.classList.toggle("is-dimmed", other !== card);
+          });
+          state.selectedTimer = setTimeout(() => showPlay(type), 340);
+        });
+      });
+
+      els.backButton.addEventListener("click", showSelect);
+      els.volumeSlider.addEventListener("input", (event) => setVolume(event.target.value));
+      els.guideToggle.addEventListener("click", () => {
+        const open = els.guideDetails.hidden;
+        els.guideDetails.hidden = !open;
+        els.guideToggle.setAttribute("aria-expanded", String(open));
+        requestAnimationFrame(fitStage);
+      });
+
+      addEventListener("keydown", (event) => {
+        if (event.repeat || isEditableTarget(event.target) || !state.currentType) return;
+        const noteId = resolveShortcut(event, state.currentType);
+        if (!noteId) return;
+        event.preventDefault();
+        triggerNote(noteId);
+      });
+
+      addEventListener("resize", () => requestAnimationFrame(fitStage));
+      enableCalibrate();
+      const initialType = initialTypeFromSearch(location.search);
+      if (initialType) showPlay(initialType);
+    })();
+  </script>
+</body>
+</html>
