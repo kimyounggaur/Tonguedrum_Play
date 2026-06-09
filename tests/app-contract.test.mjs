@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
@@ -33,8 +34,87 @@ function pngSize(assetPath) {
   };
 }
 
+function rgbaPng(assetPath) {
+  const buffer = fs.readFileSync(path.join(root, assetPath));
+  assert.equal(buffer.toString("ascii", 1, 4), "PNG", `${assetPath} should be a PNG file`);
+
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  let bitDepth = 0;
+  let colorType = 0;
+  const idat = [];
+
+  while (offset < buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.toString("ascii", offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
+    if (type === "IHDR") {
+      width = buffer.readUInt32BE(dataStart);
+      height = buffer.readUInt32BE(dataStart + 4);
+      bitDepth = buffer[dataStart + 8];
+      colorType = buffer[dataStart + 9];
+    } else if (type === "IDAT") {
+      idat.push(buffer.subarray(dataStart, dataEnd));
+    } else if (type === "IEND") {
+      break;
+    }
+    offset = dataEnd + 4;
+  }
+
+  assert.equal(bitDepth, 8, `${assetPath} should use 8-bit color`);
+  assert.equal(colorType, 6, `${assetPath} should include an alpha channel`);
+
+  const bytesPerPixel = 4;
+  const stride = width * bytesPerPixel;
+  const inflated = zlib.inflateSync(Buffer.concat(idat));
+  const pixels = Buffer.alloc(stride * height);
+
+  for (let y = 0; y < height; y += 1) {
+    const filter = inflated[y * (stride + 1)];
+    const rowStart = y * (stride + 1) + 1;
+    const outStart = y * stride;
+    for (let x = 0; x < stride; x += 1) {
+      const raw = inflated[rowStart + x];
+      const left = x >= bytesPerPixel ? pixels[outStart + x - bytesPerPixel] : 0;
+      const up = y > 0 ? pixels[outStart + x - stride] : 0;
+      const upLeft = y > 0 && x >= bytesPerPixel ? pixels[outStart + x - stride - bytesPerPixel] : 0;
+      const pa = Math.abs(up - upLeft);
+      const pb = Math.abs(left - upLeft);
+      const pc = Math.abs(left + up - 2 * upLeft);
+      const paeth = pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft;
+      const value = filter === 0 ? raw
+        : filter === 1 ? raw + left
+          : filter === 2 ? raw + up
+            : filter === 3 ? raw + Math.floor((left + up) / 2)
+              : filter === 4 ? raw + paeth
+                : raw;
+      pixels[outStart + x] = value & 0xff;
+    }
+  }
+
+  const pixelAt = (x, y) => {
+    const i = (y * width + x) * bytesPerPixel;
+    return { r: pixels[i], g: pixels[i + 1], b: pixels[i + 2], a: pixels[i + 3] };
+  };
+
+  return { width, height, pixelAt };
+}
+
 assert.deepEqual(pngSize("assets/play-11.png"), { width: 2407, height: 2407 });
 assert.deepEqual(pngSize("assets/play-15.png"), { width: 1563, height: 1832 });
+
+for (const asset of ["assets/char-11.png", "assets/char-15.png"]) {
+  const image = rgbaPng(asset);
+  const corners = [
+    image.pixelAt(0, 0),
+    image.pixelAt(image.width - 1, 0),
+    image.pixelAt(0, image.height - 1),
+    image.pixelAt(image.width - 1, image.height - 1),
+  ];
+  assert.ok(corners.every((pixel) => pixel.a === 0), `${asset} should have transparent background corners`);
+}
 
 assert.match(html, /id="app"/, "app root should be present");
 assert.match(html, /id="selectScreen"/, "select screen should be present");
@@ -108,6 +188,27 @@ assert.equal(api.DRUMS["11"].aspect, "2407 / 2407");
 assert.equal(api.DRUMS["15"].aspect, "1563 / 1832");
 assert.equal(api.DRUMS["11"].playImage, "assets/play-11.png");
 assert.equal(api.DRUMS["15"].playImage, "assets/play-15.png");
+assert.equal(typeof api.shouldSuppressPointerClick, "function");
+assert.equal(
+  api.shouldSuppressPointerClick({ noteId: "C4", time: 1000 }, "C4", { detail: 1 }, 1260),
+  true,
+  "pointer-generated click should not replay the note after pointerdown",
+);
+assert.equal(
+  api.shouldSuppressPointerClick({ noteId: "C4", time: 1000 }, "C4", { detail: 0 }, 1260),
+  false,
+  "keyboard-generated click should remain playable",
+);
+assert.equal(
+  api.shouldSuppressPointerClick({ noteId: "C4", time: 1000 }, "D4", { detail: 1 }, 1260),
+  false,
+  "a click for a different note should not be suppressed",
+);
+assert.equal(
+  api.shouldSuppressPointerClick({ noteId: "C4", time: 1000 }, "C4", { detail: 1 }, 2000),
+  false,
+  "old pointer hits should not suppress later clicks",
+);
 
 function assertSlitTarget(actual, expected, label) {
   assert.ok(Math.abs(actual.x - expected.x) <= 1.5, `${label} x should stay inside the tongue slit`);

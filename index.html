@@ -803,10 +803,12 @@
         currentType: null,
         hideRecentTimer: null,
         selectedTimer: null,
+        lastPointerHit: null,
       };
 
       let ctx = null;
       let master = null;
+      const POINTER_CLICK_SUPPRESS_MS = 750;
 
       function freqFromMidi(midi) {
         return 440 * Math.pow(2, (midi - 69) / 12);
@@ -856,6 +858,17 @@
       function initialTypeFromSearch(search) {
         const match = /(?:^\?|&)drum=(11|15)(?:&|$)/.exec(String(search || ""));
         return match && DRUMS[match[1]] ? match[1] : null;
+      }
+
+      function currentTimeMs() {
+        return root.performance && typeof root.performance.now === "function" ? root.performance.now() : Date.now();
+      }
+
+      function shouldSuppressPointerClick(lastPointerHit, noteId, eventLike = {}, now = currentTimeMs()) {
+        if (Number(eventLike.detail || 0) === 0) return false;
+        if (!lastPointerHit || lastPointerHit.noteId !== noteId) return false;
+        const elapsed = now - Number(lastPointerHit.time);
+        return elapsed >= 0 && elapsed <= POINTER_CLICK_SUPPRESS_MS;
       }
 
       function ensureAudio() {
@@ -1013,6 +1026,7 @@
         labelOf,
         initialTypeFromSearch,
         freqFromMidi,
+        shouldSuppressPointerClick,
       };
 
       runSelfTests();
@@ -1121,15 +1135,13 @@
           button.setAttribute("aria-label", `${labelOf(noteId)}, 단축키 ${shortcutLabelOf(noteId, type)}`);
           button.addEventListener("pointerdown", (event) => {
             event.preventDefault();
-            button.dataset.pointerPlayed = "1";
+            state.lastPointerHit = { noteId, time: currentTimeMs() };
             triggerNote(noteId);
-            setTimeout(() => {
-              delete button.dataset.pointerPlayed;
-            }, 80);
           });
           button.addEventListener("click", (event) => {
-            if (button.dataset.pointerPlayed) {
+            if (shouldSuppressPointerClick(state.lastPointerHit, noteId, event, currentTimeMs())) {
               event.preventDefault();
+              state.lastPointerHit = null;
               return;
             }
             triggerNote(noteId);
