@@ -206,12 +206,13 @@ assert.doesNotMatch(html, /\.tongue-hit::after[\s\S]*?inset:\s*-/, "tongue glow 
 assert.doesNotMatch(html, /@keyframes tongueGlowPulse[\s\S]*?scale\(1\./, "tongue glow pulse should stay inside the slit outline");
 assert.doesNotMatch(html, /@keyframes tongueOutlinePulse[\s\S]*?0 0 0 \d+px/, "outline pulse should not cast an outside spread beyond the slit");
 assert.match(html, /\.tongue-svg/, "tongue buttons should include an SVG animation layer");
-assert.match(html, /className = "tongue-svg"/, "tongue buttons should render SVG animation markup");
-assert.match(html, /className = "tongue-clip"/, "tongue SVG should define a clipPath for the slit outline");
-assert.match(html, /className = "tongue-clipped-effects"/, "tongue SVG effects should be clipped to the slit outline");
+assert.match(html, /setAttribute\("class", "tongue-svg"\)/, "tongue buttons should render SVG animation markup with mobile-safe class assignment");
+assert.match(html, /setAttribute\("class", "tongue-clip"\)/, "tongue SVG should define a clipPath for the slit outline");
+assert.match(html, /setAttribute\("class", "tongue-clipped-effects"\)/, "tongue SVG effects should be clipped to the slit outline");
 assert.match(html, /clip-path.*url\(#/, "tongue glow and trace should be clipped by the slit path");
-assert.match(html, /className = "tongue-glow-fill"/, "tongue SVG should render a clipped glow fill");
-assert.match(html, /className = "tongue-outline-path"/, "tongue SVG should render the slit outline path");
+assert.match(html, /setAttribute\("class", "tongue-glow-fill"\)/, "tongue SVG should render a clipped glow fill");
+assert.match(html, /setAttribute\("class", "tongue-outline-path"\)/, "tongue SVG should render the slit outline path");
+assert.doesNotMatch(html, /\.className = "tongue-(?:svg|clip|clipped-effects|glow-fill|svg-path|outline-path)"/, "SVG elements should avoid className assignment for mobile Safari compatibility");
 assert.match(html, /@keyframes tongueSvgTrace/, "tongue SVG stroke should animate dynamically");
 assert.match(html, /\.tongue-hit:focus-visible \.tongue-svg,[\s\S]*?\.tongue-hit:active \.tongue-svg,[\s\S]*?\.tongue-hit\.is-playing \.tongue-svg/, "SVG animation should appear for focus, active, and playing states");
 assert.match(html, /\.tongue-hit:focus-visible \.tongue-svg-path,[\s\S]*?\.tongue-hit:active \.tongue-svg-path,[\s\S]*?\.tongue-hit\.is-playing \.tongue-svg-path/, "SVG path should animate for focus, active, and playing states");
