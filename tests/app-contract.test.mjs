@@ -132,6 +132,14 @@ assert.match(html, /@keyframes bgDrumBob/, "background mini drums should animate
 assert.match(html, /@keyframes bgNoteFloat/, "background notes should float with CSS");
 assert.match(html, /@keyframes bgSparklePop/, "background sparkles should animate with CSS");
 assert.match(html, /\.bg-wave/, "background should include animated musical wave lines");
+assert.match(html, /document\.startViewTransition/, "screen changes should use the Motion Lab view-transition pattern when supported");
+assert.match(html, /function runScreenTransition/, "screen transition fallback should be centralized");
+assert.match(html, /@keyframes screenPopIn/, "screen transition fallback should have a CSS pop-in animation");
+assert.match(html, /class="note-burst-layer"/, "play screen should include a non-interactive note burst layer");
+assert.match(html, /\.note-burst-layer[\s\S]*?pointer-events:\s*none/, "note burst layer should not block tongue hit areas");
+assert.match(html, /@keyframes noteBurstPop/, "note bursts should use a lightweight CSS animation");
+assert.match(html, /function createNoteBurst/, "note play feedback should create Motion Lab style micro bursts");
+assert.match(html, /createNoteBurst\(noteId\)/, "note bursts should run when a tongue is played");
 assert.match(html, /@media \(max-width: 430px\)/, "narrow screens should have a compact play topbar");
 assert.doesNotMatch(html, /<script\s+src=/i, "app should not load external scripts");
 assert.doesNotMatch(html, /https?:\/\//i, "app should not depend on remote resources");

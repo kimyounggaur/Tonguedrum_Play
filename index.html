@@ -156,6 +156,18 @@
       display: none;
     }
 
+    .screen.screen-transition-pop {
+      animation: screenPopIn .42s cubic-bezier(.2, 1.16, .38, 1) both;
+    }
+
+    ::view-transition-old(root) {
+      animation: screenFadeOut .24s ease-out both;
+    }
+
+    ::view-transition-new(root) {
+      animation: screenFadeIn .34s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
     .select-screen {
       padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
       gap: 16px;
@@ -511,6 +523,39 @@
       -webkit-user-drag: none;
     }
 
+    .note-burst-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .note-burst-dot {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--size, 7px);
+      height: var(--size, 7px);
+      border-radius: 999px;
+      background:
+        radial-gradient(circle, rgba(255, 255, 236, .98) 0 32%, rgba(255, 236, 92, .92) 38% 72%, transparent 74%);
+      box-shadow:
+        0 0 8px rgba(255, 244, 112, .74),
+        0 0 16px rgba(255, 194, 58, .38);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.35);
+      animation: noteBurstPop .74s cubic-bezier(.2, .8, .2, 1) forwards;
+      animation-delay: var(--delay, 0ms);
+      mix-blend-mode: screen;
+    }
+
+    .note-burst-dot--soft {
+      background:
+        radial-gradient(circle, rgba(255, 251, 202, .88) 0 38%, rgba(255, 184, 72, .7) 44% 68%, transparent 72%);
+      filter: blur(.15px);
+    }
+
     .tongue-layer {
       position: absolute;
       inset: 0;
@@ -827,6 +872,64 @@
       }
     }
 
+    @keyframes screenFadeOut {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(.985);
+      }
+    }
+
+    @keyframes screenFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(.985);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes screenPopIn {
+      0% {
+        opacity: .45;
+        transform: translateY(12px) scale(.985);
+      }
+
+      70% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.006);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes noteBurstPop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.28);
+      }
+
+      18% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(.12);
+      }
+    }
+
     @keyframes alpacaBob {
       0%,
       100% {
@@ -1088,6 +1191,7 @@
       .tongue-hit::after,
       .tongue-svg,
       .tongue-wave-path,
+      .note-burst-dot,
       .alpaca-body,
       .alpaca-mallet-left,
       .alpaca-mallet-right,
@@ -1184,6 +1288,7 @@
         <div id="drumStage" class="drum-stage" style="--stage-aspect: 1 / 1;">
           <img id="drumPhoto" class="drum-photo" src="assets/play-11.png" alt="11키 스틸 텅드럼">
           <div id="tongueLayer" class="tongue-layer" aria-label="텅드럼 연주 영역"></div>
+          <div id="noteBurstLayer" class="note-burst-layer" aria-hidden="true"></div>
         </div>
       </main>
 
@@ -1606,6 +1711,7 @@
         drumStage: document.getElementById("drumStage"),
         drumPhoto: document.getElementById("drumPhoto"),
         tongueLayer: document.getElementById("tongueLayer"),
+        noteBurstLayer: document.getElementById("noteBurstLayer"),
         volumeSlider: document.getElementById("volumeSlider"),
         guideToggle: document.getElementById("guideToggle"),
         guideDetails: document.getElementById("guideDetails"),
@@ -1635,10 +1741,37 @@
         });
       }
 
+      function shouldReduceMotion() {
+        return Boolean(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      }
+
+      function replayScreenPop(screen) {
+        if (!screen || shouldReduceMotion()) return;
+        screen.classList.remove("screen-transition-pop");
+        void screen.offsetWidth;
+        screen.classList.add("screen-transition-pop");
+        setTimeout(() => screen.classList.remove("screen-transition-pop"), 480);
+      }
+
+      function runScreenTransition(update, targetScreen) {
+        if (shouldReduceMotion()) {
+          update();
+          return;
+        }
+        if (document.startViewTransition) {
+          const transition = document.startViewTransition(update);
+          transition.finished.then(() => replayScreenPop(targetScreen)).catch(() => replayScreenPop(targetScreen));
+          return;
+        }
+        update();
+        replayScreenPop(targetScreen);
+      }
+
       function showSelect() {
         state.currentType = null;
         clearTimeout(state.selectedTimer);
         resetCards();
+        els.noteBurstLayer.innerHTML = "";
         els.playScreen.hidden = true;
         els.selectScreen.hidden = false;
         els.cards[0]?.focus({ preventScroll: true });
@@ -1659,6 +1792,7 @@
         renderTongues(type);
         renderMapping(type);
         showRecentNote(null);
+        els.noteBurstLayer.innerHTML = "";
 
         els.selectScreen.hidden = true;
         els.playScreen.hidden = false;
@@ -1782,8 +1916,33 @@
         const pan = position ? (position.x - 50) / 50 : 0;
         playNote(noteId, { pan });
         flashTongue(noteId);
+        createNoteBurst(noteId);
         showRecentNote(noteId);
         updateAriaLive(noteId);
+      }
+
+      function createNoteBurst(noteId) {
+        if (shouldReduceMotion() || !els.noteBurstLayer) return;
+        const type = state.currentType;
+        const position = type && POS[type] ? POS[type][noteId] : null;
+        if (!position) return;
+        const count = 10;
+        for (let i = 0; i < count; i += 1) {
+          const dot = document.createElement("span");
+          const angle = (i / count * Math.PI * 2) + (Math.random() - .5) * .32;
+          const distance = 24 + (i % 4) * 8;
+          const size = 5 + (i % 3) * 2;
+          dot.className = `note-burst-dot${i % 2 ? " note-burst-dot--soft" : ""}`;
+          dot.style.setProperty("--x", `${position.x}%`);
+          dot.style.setProperty("--y", `${position.y}%`);
+          dot.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
+          dot.style.setProperty("--ty", `${Math.sin(angle) * distance}px`);
+          dot.style.setProperty("--size", `${size}px`);
+          dot.style.setProperty("--delay", `${i * 12}ms`);
+          els.noteBurstLayer.appendChild(dot);
+          dot.addEventListener("animationend", () => dot.remove(), { once: true });
+          setTimeout(() => dot.remove(), 950);
+        }
       }
 
       function flashTongue(noteId) {
@@ -1831,11 +1990,11 @@
             other.classList.toggle("is-selected", other === card);
             other.classList.toggle("is-dimmed", other !== card);
           });
-          state.selectedTimer = setTimeout(() => showPlay(type), 340);
+          state.selectedTimer = setTimeout(() => runScreenTransition(() => showPlay(type), els.playScreen), 280);
         });
       });
 
-      els.backButton.addEventListener("click", showSelect);
+      els.backButton.addEventListener("click", () => runScreenTransition(showSelect, els.selectScreen));
       els.volumeSlider.addEventListener("input", (event) => setVolume(event.target.value));
       els.guideToggle.addEventListener("click", () => {
         const open = els.guideDetails.hidden;
