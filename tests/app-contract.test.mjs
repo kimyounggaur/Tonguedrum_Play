@@ -24,6 +24,18 @@ for (const asset of requiredAssets) {
   assert.ok(html.includes(asset), `${asset} should be referenced by index.html`);
 }
 
+function pngSize(assetPath) {
+  const buffer = fs.readFileSync(path.join(root, assetPath));
+  assert.equal(buffer.toString("ascii", 1, 4), "PNG", `${assetPath} should be a PNG file`);
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+}
+
+assert.deepEqual(pngSize("assets/play-11.png"), { width: 2407, height: 2407 });
+assert.deepEqual(pngSize("assets/play-15.png"), { width: 1563, height: 1832 });
+
 assert.match(html, /id="app"/, "app root should be present");
 assert.match(html, /id="selectScreen"/, "select screen should be present");
 assert.match(html, /id="playScreen"/, "play screen should be present");
@@ -92,7 +104,7 @@ assert.equal(api.NOTES_11.length, 11);
 assert.equal(api.NOTES_15.length, 15);
 assert.ok(api.NOTES_11.every((note) => api.NOTE[note] && api.POS_11[note]));
 assert.ok(api.NOTES_15.every((note) => api.NOTE[note] && api.POS_15[note]));
-assert.equal(api.DRUMS["11"].aspect, "2481 / 3509");
+assert.equal(api.DRUMS["11"].aspect, "2407 / 2407");
 assert.equal(api.DRUMS["15"].aspect, "1563 / 1832");
 assert.equal(api.DRUMS["11"].playImage, "assets/play-11.png");
 assert.equal(api.DRUMS["15"].playImage, "assets/play-15.png");
