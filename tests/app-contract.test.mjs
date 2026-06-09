@@ -196,6 +196,9 @@ assert.match(html, /\.tongue-hit:hover::before,[\s\S]*?\.tongue-hit:focus-visibl
 assert.match(html, /\.tongue-hit:hover::after,[\s\S]*?\.tongue-hit:focus-visible::after,[\s\S]*?\.tongue-hit:active::after,[\s\S]*?\.tongue-hit\.is-playing::after/, "hover, focus, active, and playing states should share the glow pulse");
 assert.match(html, /animation:\s*tongueOutlinePulse/, "outline pulse animation should be applied");
 assert.match(html, /animation:\s*tongueGlowPulse/, "glow pulse animation should be applied");
+assert.doesNotMatch(html, /\.tongue-hit::after[\s\S]*?inset:\s*-/, "tongue glow should not expand outside the slit hit area");
+assert.doesNotMatch(html, /@keyframes tongueGlowPulse[\s\S]*?scale\(1\./, "tongue glow pulse should stay inside the slit outline");
+assert.doesNotMatch(html, /@keyframes tongueOutlinePulse[\s\S]*?0 0 0 \d+px/, "outline pulse should not cast an outside spread beyond the slit");
 assert.equal(typeof api.hoverLabelOf, "function");
 for (const noteId of api.NOTES_15) {
   const hoverLabel = api.hoverLabelOf(noteId);
