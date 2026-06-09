@@ -188,6 +188,15 @@ assert.equal(api.DRUMS["11"].aspect, "2407 / 2407");
 assert.equal(api.DRUMS["15"].aspect, "1563 / 1832");
 assert.equal(api.DRUMS["11"].playImage, "assets/play-11.png");
 assert.equal(api.DRUMS["15"].playImage, "assets/play-15.png");
+assert.match(html, /\.tongue-label/, "tongue hover labels should be styled");
+assert.match(html, /className = "tongue-label"/, "tongue buttons should render hover labels");
+assert.equal(typeof api.hoverLabelOf, "function");
+for (const noteId of api.NOTES_15) {
+  const hoverLabel = api.hoverLabelOf(noteId);
+  assert.ok(hoverLabel.includes(api.NOTE[noteId].ko), `${noteId} hover label should include the solfege name`);
+  assert.ok(hoverLabel.includes(api.NOTE[noteId].num), `${noteId} hover label should include the numbered note name`);
+  assert.doesNotMatch(hoverLabel, /\b[A-G][#b]?\d\b/, `${noteId} hover label should stay focused on solfege labels`);
+}
 assert.equal(typeof api.shouldSuppressPointerClick, "function");
 assert.equal(
   api.shouldSuppressPointerClick({ noteId: "C4", time: 1000 }, "C4", { detail: 1 }, 1260),

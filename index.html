@@ -404,6 +404,41 @@
       transform: translate(-50%, -50%) rotate(var(--rot));
     }
 
+    .tongue-label {
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 54px;
+      max-width: 96px;
+      padding: 4px 7px;
+      border: 1px solid rgba(255, 210, 122, .58);
+      border-radius: 8px;
+      background: rgba(16, 32, 40, .94);
+      color: var(--ink);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, .34), 0 0 18px rgba(255, 210, 122, .16);
+      font-size: .68rem;
+      font-weight: 780;
+      line-height: 1.12;
+      letter-spacing: 0;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -6px) rotate(var(--label-rot)) scale(.94);
+      transform-origin: center;
+      transition: opacity .14s ease, transform .14s ease;
+    }
+
+    .tongue-label b {
+      color: var(--glow);
+      font-size: .76rem;
+      font-weight: 900;
+    }
+
     .tongue-hit::before {
       content: "";
       position: absolute;
@@ -427,6 +462,12 @@
     .tongue-hit:hover::before,
     .tongue-hit:focus-visible::before {
       border-color: rgba(255, 210, 122, .5);
+    }
+
+    .tongue-hit:hover .tongue-label,
+    .tongue-hit:focus-visible .tongue-label {
+      opacity: 1;
+      transform: translate(-50%, -12px) rotate(var(--label-rot)) scale(1);
     }
 
     .tongue-hit.is-playing::after {
@@ -855,6 +896,16 @@
         return note ? `${note.ko} · ${noteId} · ${note.num}` : noteId;
       }
 
+      function hoverLabelOf(noteId) {
+        const note = NOTE[noteId];
+        return note ? `${note.ko} ${note.num}` : noteId;
+      }
+
+      function inverseRotation(rot) {
+        const match = /^(-?\d+(?:\.\d+)?)deg$/.exec(String(rot || "0deg"));
+        return match ? `${-Number(match[1])}deg` : "0deg";
+      }
+
       function initialTypeFromSearch(search) {
         const match = /(?:^\?|&)drum=(11|15)(?:&|$)/.exec(String(search || ""));
         return match && DRUMS[match[1]] ? match[1] : null;
@@ -1024,6 +1075,7 @@
         resolveShortcut,
         shortcutLabelOf,
         labelOf,
+        hoverLabelOf,
         initialTypeFromSearch,
         freqFromMidi,
         shouldSuppressPointerClick,
@@ -1132,7 +1184,14 @@
           button.style.setProperty("--w", `${position.w}%`);
           button.style.setProperty("--h", `${position.h}%`);
           button.style.setProperty("--rot", position.rot || "0deg");
+          button.style.setProperty("--label-rot", inverseRotation(position.rot));
+          button.dataset.toneLabel = hoverLabelOf(noteId);
           button.setAttribute("aria-label", `${labelOf(noteId)}, 단축키 ${shortcutLabelOf(noteId, type)}`);
+          const label = document.createElement("span");
+          label.className = "tongue-label";
+          label.setAttribute("aria-hidden", "true");
+          label.innerHTML = `<b>${NOTE[noteId].num}</b>${NOTE[noteId].ko}`;
+          button.appendChild(label);
           button.addEventListener("pointerdown", (event) => {
             event.preventDefault();
             state.lastPointerHit = { noteId, time: currentTimeMs() };
