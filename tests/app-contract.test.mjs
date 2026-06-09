@@ -199,6 +199,11 @@ assert.match(html, /animation:\s*tongueGlowPulse/, "glow pulse animation should 
 assert.doesNotMatch(html, /\.tongue-hit::after[\s\S]*?inset:\s*-/, "tongue glow should not expand outside the slit hit area");
 assert.doesNotMatch(html, /@keyframes tongueGlowPulse[\s\S]*?scale\(1\./, "tongue glow pulse should stay inside the slit outline");
 assert.doesNotMatch(html, /@keyframes tongueOutlinePulse[\s\S]*?0 0 0 \d+px/, "outline pulse should not cast an outside spread beyond the slit");
+assert.match(html, /\.tongue-svg/, "tongue buttons should include an SVG animation layer");
+assert.match(html, /className = "tongue-svg"/, "tongue buttons should render SVG animation markup");
+assert.match(html, /@keyframes tongueSvgTrace/, "tongue SVG stroke should animate dynamically");
+assert.match(html, /\.tongue-hit:focus-visible \.tongue-svg,[\s\S]*?\.tongue-hit:active \.tongue-svg,[\s\S]*?\.tongue-hit\.is-playing \.tongue-svg/, "SVG animation should appear for focus, active, and playing states");
+assert.match(html, /\.tongue-hit:focus-visible \.tongue-svg-path,[\s\S]*?\.tongue-hit:active \.tongue-svg-path,[\s\S]*?\.tongue-hit\.is-playing \.tongue-svg-path/, "SVG path should animate for focus, active, and playing states");
 assert.equal(typeof api.hoverLabelOf, "function");
 for (const noteId of api.NOTES_15) {
   const hoverLabel = api.hoverLabelOf(noteId);

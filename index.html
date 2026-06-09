@@ -439,6 +439,30 @@
       font-weight: 900;
     }
 
+    .tongue-svg {
+      position: absolute;
+      inset: 16%;
+      z-index: 2;
+      width: 68%;
+      height: 68%;
+      opacity: 0;
+      overflow: visible;
+      pointer-events: none;
+      transform: rotate(var(--label-rot)) scale(.92);
+      transition: opacity .14s ease, transform .14s ease;
+    }
+
+    .tongue-svg-path {
+      fill: none;
+      stroke: rgba(255, 226, 148, .96);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 62 142;
+      stroke-dashoffset: 0;
+      filter: drop-shadow(0 0 5px rgba(255, 210, 122, .72));
+    }
+
     .tongue-hit::before {
       content: "";
       position: absolute;
@@ -484,6 +508,19 @@
     .tongue-hit:focus-visible .tongue-label {
       opacity: 1;
       transform: translate(-50%, -12px) rotate(var(--label-rot)) scale(1);
+    }
+
+    .tongue-hit:focus-visible .tongue-svg,
+    .tongue-hit:active .tongue-svg,
+    .tongue-hit.is-playing .tongue-svg {
+      opacity: 1;
+      transform: rotate(var(--label-rot)) scale(1);
+    }
+
+    .tongue-hit:focus-visible .tongue-svg-path,
+    .tongue-hit:active .tongue-svg-path,
+    .tongue-hit.is-playing .tongue-svg-path {
+      animation: tongueSvgTrace .72s ease-in-out infinite;
     }
 
     .tongue-hit:active::before,
@@ -639,6 +676,26 @@
       }
     }
 
+    @keyframes tongueSvgTrace {
+      0% {
+        stroke-dashoffset: 80;
+        stroke-width: 5;
+        opacity: .45;
+      }
+
+      46% {
+        stroke-dashoffset: -18;
+        stroke-width: 8;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-dashoffset: -96;
+        stroke-width: 5;
+        opacity: .5;
+      }
+    }
+
     @media (orientation: landscape) {
       .select-cards {
         grid-template-columns: 1fr 1fr;
@@ -715,6 +772,7 @@
 
       .tongue-hit::before,
       .tongue-hit::after,
+      .tongue-svg,
       .tongue-hit.is-playing::after {
         transform: none;
       }
@@ -793,6 +851,7 @@
       "use strict";
 
       const root = typeof window !== "undefined" ? window : globalThis;
+      const SVG_NS = "http" + "://www.w3.org/2000/svg";
 
       const NOTE = {
         E3: { freq: 164.81, midi: 52, num: ".3", ko: "낮은 미" },
@@ -1250,6 +1309,16 @@
           label.setAttribute("aria-hidden", "true");
           label.innerHTML = `<b>${NOTE[noteId].num}</b>${NOTE[noteId].ko}`;
           button.appendChild(label);
+          const svg = document.createElementNS(SVG_NS, "svg");
+          svg.className = "tongue-svg";
+          svg.setAttribute("viewBox", "0 0 100 100");
+          svg.setAttribute("aria-hidden", "true");
+          svg.setAttribute("focusable", "false");
+          const path = document.createElementNS(SVG_NS, "path");
+          path.className = "tongue-svg-path";
+          path.setAttribute("d", "M28 18 C18 38 22 65 50 78 C78 65 82 38 72 18");
+          svg.appendChild(path);
+          button.appendChild(svg);
           button.addEventListener("pointerdown", (event) => {
             event.preventDefault();
             state.lastPointerHit = { noteId, time: currentTimeMs() };
