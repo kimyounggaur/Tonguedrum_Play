@@ -496,66 +496,86 @@
 
     .tongue-svg {
       position: absolute;
-      inset: 16%;
+      inset: 0;
       z-index: 2;
-      width: 68%;
-      height: 68%;
+      width: 100%;
+      height: 100%;
       opacity: 0;
       overflow: visible;
       pointer-events: none;
-      transform: rotate(var(--label-rot)) scale(.92);
+      transform: scale(.96);
       transition: opacity .14s ease, transform .14s ease;
+    }
+
+    .tongue-glow-fill {
+      fill: rgba(255, 210, 122, .34);
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .tongue-outline-path {
+      fill: none;
+      stroke: rgba(255, 226, 148, .96);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+      filter: drop-shadow(0 0 3px rgba(255, 210, 122, .54));
+      transform-box: fill-box;
+      transform-origin: center;
     }
 
     .tongue-svg-path {
       fill: none;
-      stroke: rgba(255, 226, 148, .96);
-      stroke-width: 7;
+      stroke: rgba(255, 246, 191, .98);
+      stroke-width: 5;
       stroke-linecap: round;
       stroke-linejoin: round;
-      stroke-dasharray: 62 142;
+      stroke-dasharray: 54 150;
       stroke-dashoffset: 0;
-      filter: drop-shadow(0 0 5px rgba(255, 210, 122, .72));
+      opacity: 0;
+      filter: drop-shadow(0 0 3px rgba(255, 210, 122, .52));
     }
 
     .tongue-hit::before {
       content: "";
       position: absolute;
-      inset: 9%;
+      inset: 0;
       border-radius: inherit;
-      border: 1px solid rgba(255, 210, 122, 0);
-      box-shadow: inset 0 0 0 rgba(255, 210, 122, 0);
       opacity: 0;
-      transform: scale(.88);
-      transition: border-color .14s ease, box-shadow .14s ease, opacity .14s ease, transform .14s ease;
+      pointer-events: none;
     }
 
     .tongue-hit::after {
       content: "";
       position: absolute;
-      inset: 14%;
+      inset: 0;
       border-radius: inherit;
       opacity: 0;
-      background: radial-gradient(circle, rgba(255, 226, 148, .76), rgba(255, 210, 122, .32) 48%, transparent 78%);
-      box-shadow: inset 0 0 18px rgba(255, 210, 122, .46);
-      transform: scale(.58);
-      transition: opacity .16s ease, transform .18s ease;
+      pointer-events: none;
     }
 
-    .tongue-hit:hover::before,
-    .tongue-hit:focus-visible::before,
-    .tongue-hit:active::before {
-      border-color: rgba(255, 210, 122, .92);
+    .tongue-hit:hover .tongue-svg,
+    .tongue-hit:focus-visible .tongue-svg,
+    .tongue-hit:active .tongue-svg,
+    .tongue-hit.is-playing .tongue-svg {
       opacity: 1;
-      transform: scale(.96);
+      transform: scale(1);
+    }
+
+    .tongue-hit:hover .tongue-outline-path,
+    .tongue-hit:focus-visible .tongue-outline-path,
+    .tongue-hit:active .tongue-outline-path,
+    .tongue-hit.is-playing .tongue-outline-path {
+      opacity: 1;
       animation: tongueOutlinePulse .86s ease-in-out infinite;
     }
 
-    .tongue-hit:hover::after,
-    .tongue-hit:focus-visible::after,
-    .tongue-hit:active::after,
-    .tongue-hit.is-playing::after {
-      opacity: 1;
+    .tongue-hit:hover .tongue-glow-fill,
+    .tongue-hit:focus-visible .tongue-glow-fill,
+    .tongue-hit:active .tongue-glow-fill,
+    .tongue-hit.is-playing .tongue-glow-fill {
       animation: tongueGlowPulse .72s ease-out infinite;
     }
 
@@ -565,27 +585,19 @@
       transform: translate(-50%, -12px) rotate(var(--label-rot)) scale(1);
     }
 
-    .tongue-hit:focus-visible .tongue-svg,
-    .tongue-hit:active .tongue-svg,
-    .tongue-hit.is-playing .tongue-svg {
-      opacity: 1;
-      transform: rotate(var(--label-rot)) scale(1);
-    }
-
     .tongue-hit:focus-visible .tongue-svg-path,
     .tongue-hit:active .tongue-svg-path,
     .tongue-hit.is-playing .tongue-svg-path {
+      opacity: 1;
       animation: tongueSvgTrace .72s ease-in-out infinite;
     }
 
-    .tongue-hit:active::before,
-    .tongue-hit.is-playing::before {
-      border-color: rgba(255, 226, 148, 1);
-      opacity: 1;
-      animation: tongueOutlinePulse .48s ease-out infinite;
+    .tongue-hit:active .tongue-outline-path,
+    .tongue-hit.is-playing .tongue-outline-path {
+      animation-duration: .48s;
     }
 
-    .tongue-hit.is-playing::after {
+    .tongue-hit.is-playing .tongue-glow-fill {
       animation-duration: .42s;
     }
 
@@ -745,35 +757,38 @@
 
     @keyframes tongueOutlinePulse {
       0% {
-        box-shadow: inset 0 0 0 rgba(255, 210, 122, .12);
-        transform: scale(.86);
+        stroke-width: 2.6;
+        opacity: .38;
+        transform: scale(.92);
       }
 
       42% {
-        box-shadow: inset 0 0 18px rgba(255, 210, 122, .72);
-        transform: scale(.98);
+        stroke-width: 4.8;
+        opacity: 1;
+        transform: scale(.985);
       }
 
       100% {
-        box-shadow: inset 0 0 5px rgba(255, 210, 122, .18);
-        transform: scale(.9);
+        stroke-width: 3;
+        opacity: .46;
+        transform: scale(.94);
       }
     }
 
     @keyframes tongueGlowPulse {
       0% {
-        opacity: .42;
-        transform: scale(.58);
+        opacity: .16;
+        transform: scale(.7);
       }
 
       38% {
-        opacity: 1;
+        opacity: .76;
         transform: scale(.98);
       }
 
       100% {
-        opacity: .34;
-        transform: scale(.72);
+        opacity: .2;
+        transform: scale(.78);
       }
     }
 
@@ -959,6 +974,8 @@
 
       const root = typeof window !== "undefined" ? window : globalThis;
       const SVG_NS = "http" + "://www.w3.org/2000/svg";
+      const SLIT_CLIP_PATH = "M28 14 C16 36 20 70 50 86 C80 70 84 36 72 14 L63 14 C70 36 66 60 50 72 C34 60 30 36 37 14 Z";
+      const SLIT_TRACE_PATH = "M32 16 C22 36 25 64 50 78 C75 64 78 36 68 16";
       const ALPACA_SVG = `
         <svg class="alpaca-drum-svg" viewBox="0 0 160 104" focusable="false">
           <g class="alpaca-body">
@@ -1460,10 +1477,33 @@
           svg.setAttribute("viewBox", "0 0 100 100");
           svg.setAttribute("aria-hidden", "true");
           svg.setAttribute("focusable", "false");
-          const path = document.createElementNS(SVG_NS, "path");
-          path.className = "tongue-svg-path";
-          path.setAttribute("d", "M28 18 C18 38 22 65 50 78 C78 65 82 38 72 18");
-          svg.appendChild(path);
+          const clipId = `tongue-clip-${type}-${noteId}`;
+          const defs = document.createElementNS(SVG_NS, "defs");
+          const clip = document.createElementNS(SVG_NS, "clipPath");
+          clip.className = "tongue-clip";
+          clip.setAttribute("id", clipId);
+          clip.setAttribute("clipPathUnits", "userSpaceOnUse");
+          const clipPath = document.createElementNS(SVG_NS, "path");
+          clipPath.setAttribute("d", SLIT_CLIP_PATH);
+          clip.appendChild(clipPath);
+          defs.appendChild(clip);
+          svg.appendChild(defs);
+          const clipped = document.createElementNS(SVG_NS, "g");
+          clipped.className = "tongue-clipped-effects";
+          clipped.setAttribute("clip-path", `url(#${clipId})`);
+          const glow = document.createElementNS(SVG_NS, "path");
+          glow.className = "tongue-glow-fill";
+          glow.setAttribute("d", SLIT_CLIP_PATH);
+          clipped.appendChild(glow);
+          const trace = document.createElementNS(SVG_NS, "path");
+          trace.className = "tongue-svg-path";
+          trace.setAttribute("d", SLIT_TRACE_PATH);
+          clipped.appendChild(trace);
+          svg.appendChild(clipped);
+          const outline = document.createElementNS(SVG_NS, "path");
+          outline.className = "tongue-outline-path";
+          outline.setAttribute("d", SLIT_TRACE_PATH);
+          svg.appendChild(outline);
           button.appendChild(svg);
           button.addEventListener("pointerdown", (event) => {
             event.preventDefault();
