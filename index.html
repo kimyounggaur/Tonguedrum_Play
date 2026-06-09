@@ -583,8 +583,8 @@
       fill: rgba(255, 244, 98, .46);
       opacity: 0;
       filter:
-        drop-shadow(0 0 6px rgba(255, 238, 98, .78))
-        drop-shadow(0 0 12px rgba(255, 192, 56, .46));
+        drop-shadow(0 0 5px rgba(255, 238, 98, .68))
+        drop-shadow(0 0 10px rgba(255, 192, 56, .34));
       transform-box: fill-box;
       transform-origin: center;
     }
@@ -603,13 +603,33 @@
       transform-origin: center;
     }
 
+    .tongue-wave-path {
+      fill: none;
+      stroke: rgba(255, 238, 76, .92);
+      stroke-width: 3.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 7 13;
+      stroke-dashoffset: 0;
+      opacity: 0;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 248, 166, .9))
+        drop-shadow(0 0 10px rgba(255, 204, 54, .56));
+    }
+
+    .tongue-wave-path--two {
+      stroke: rgba(255, 255, 218, .86);
+      stroke-width: 2.4;
+      stroke-dasharray: 4 10;
+    }
+
     .tongue-svg-path {
       fill: none;
       stroke: rgba(255, 255, 232, 1);
-      stroke-width: 5;
+      stroke-width: 3.8;
       stroke-linecap: round;
       stroke-linejoin: round;
-      stroke-dasharray: 54 150;
+      stroke-dasharray: 18 26;
       stroke-dashoffset: 0;
       opacity: 0;
       filter:
@@ -648,14 +668,29 @@
     .tongue-hit:active .tongue-outline-path,
     .tongue-hit.is-playing .tongue-outline-path {
       opacity: 1;
-      animation: tongueOutlinePulse .86s ease-in-out infinite;
+      animation: tongueOutlineWave 1.15s ease-in-out infinite;
     }
 
     .tongue-hit:hover .tongue-glow-fill,
     .tongue-hit:focus-visible .tongue-glow-fill,
     .tongue-hit:active .tongue-glow-fill,
     .tongue-hit.is-playing .tongue-glow-fill {
-      animation: tongueGlowPulse .72s ease-out infinite;
+      animation: tongueGlowWave 1.15s ease-in-out infinite;
+    }
+
+    .tongue-hit:hover .tongue-wave-path,
+    .tongue-hit:focus-visible .tongue-wave-path,
+    .tongue-hit:active .tongue-wave-path,
+    .tongue-hit.is-playing .tongue-wave-path {
+      opacity: 1;
+      animation: tongueWaveRipple 1.15s ease-in-out infinite;
+    }
+
+    .tongue-hit:hover .tongue-wave-path--two,
+    .tongue-hit:focus-visible .tongue-wave-path--two,
+    .tongue-hit:active .tongue-wave-path--two,
+    .tongue-hit.is-playing .tongue-wave-path--two {
+      animation-delay: -.38s;
     }
 
     .tongue-hit:hover .tongue-label,
@@ -664,20 +699,24 @@
       transform: translate(-50%, -12px) rotate(var(--label-rot)) scale(1);
     }
 
+    .tongue-hit:hover .tongue-svg-path,
     .tongue-hit:focus-visible .tongue-svg-path,
     .tongue-hit:active .tongue-svg-path,
     .tongue-hit.is-playing .tongue-svg-path {
       opacity: 1;
-      animation: tongueSvgTrace .72s ease-in-out infinite;
+      animation: tongueSvgTrace 1.15s ease-in-out infinite;
     }
 
     .tongue-hit:active .tongue-outline-path,
     .tongue-hit.is-playing .tongue-outline-path {
-      animation-duration: .48s;
+      animation-duration: .72s;
     }
 
-    .tongue-hit.is-playing .tongue-glow-fill {
-      animation-duration: .42s;
+    .tongue-hit:active .tongue-glow-fill,
+    .tongue-hit:active .tongue-wave-path,
+    .tongue-hit.is-playing .tongue-glow-fill,
+    .tongue-hit.is-playing .tongue-wave-path {
+      animation-duration: .72s;
     }
 
     .play-footer {
@@ -885,71 +924,89 @@
       }
     }
 
-    @keyframes tongueOutlinePulse {
+    @keyframes tongueOutlineWave {
       0% {
-        stroke-width: 3;
+        stroke-width: 2.8;
         opacity: .48;
-        transform: scale(.92);
       }
 
-      30% {
-        stroke-width: 5.6;
+      36% {
+        stroke-width: 4.8;
         opacity: 1;
-        transform: scale(.99);
       }
 
-      62% {
-        stroke-width: 4.2;
-        opacity: .78;
-        transform: scale(.955);
+      68% {
+        stroke-width: 3.4;
+        opacity: .72;
       }
 
       100% {
-        stroke-width: 3.2;
-        opacity: .54;
-        transform: scale(.94);
+        stroke-width: 2.8;
+        opacity: .5;
       }
     }
 
-    @keyframes tongueGlowPulse {
+    @keyframes tongueGlowWave {
       0% {
-        opacity: .22;
-        transform: scale(.68);
+        opacity: .18;
       }
 
-      28% {
-        opacity: .92;
-        transform: scale(.96);
+      34% {
+        opacity: .72;
       }
 
-      54% {
-        opacity: .58;
-        transform: scale(.84);
+      66% {
+        opacity: .38;
       }
 
       100% {
-        opacity: .28;
-        transform: scale(.74);
+        opacity: .2;
+      }
+    }
+
+    @keyframes tongueWaveRipple {
+      0% {
+        stroke-dashoffset: 42;
+        stroke-width: 2.4;
+        opacity: .08;
+      }
+
+      24% {
+        stroke-dashoffset: 16;
+        stroke-width: 4.4;
+        opacity: .92;
+      }
+
+      58% {
+        stroke-dashoffset: -24;
+        stroke-width: 3.3;
+        opacity: .62;
+      }
+
+      100% {
+        stroke-dashoffset: -66;
+        stroke-width: 2.2;
+        opacity: .12;
       }
     }
 
     @keyframes tongueSvgTrace {
       0% {
-        stroke-dashoffset: 80;
-        stroke-width: 5.2;
-        opacity: .52;
+        stroke-dashoffset: 38;
+        stroke-width: 2.8;
+        opacity: .22;
       }
 
-      38% {
-        stroke-dashoffset: -18;
-        stroke-width: 8.6;
-        opacity: 1;
+      42% {
+        stroke-dashoffset: -8;
+        stroke-width: 5.2;
+        opacity: .86;
       }
 
       100% {
-        stroke-dashoffset: -96;
-        stroke-width: 5.4;
-        opacity: .58;
+        stroke-dashoffset: -58;
+        stroke-width: 2.8;
+        opacity: .28;
       }
     }
 
@@ -1030,6 +1087,7 @@
       .tongue-hit::before,
       .tongue-hit::after,
       .tongue-svg,
+      .tongue-wave-path,
       .alpaca-body,
       .alpaca-mallet-left,
       .alpaca-mallet-right,
@@ -1671,6 +1729,14 @@
           glow.setAttribute("class", "tongue-glow-fill");
           glow.setAttribute("d", SLIT_CLIP_PATH);
           clipped.appendChild(glow);
+          const waveOne = document.createElementNS(SVG_NS, "path");
+          waveOne.setAttribute("class", "tongue-wave-path tongue-wave-path--one");
+          waveOne.setAttribute("d", SLIT_TRACE_PATH);
+          clipped.appendChild(waveOne);
+          const waveTwo = document.createElementNS(SVG_NS, "path");
+          waveTwo.setAttribute("class", "tongue-wave-path tongue-wave-path--two");
+          waveTwo.setAttribute("d", SLIT_TRACE_PATH);
+          clipped.appendChild(waveTwo);
           const trace = document.createElementNS(SVG_NS, "path");
           trace.setAttribute("class", "tongue-svg-path");
           trace.setAttribute("d", SLIT_TRACE_PATH);
