@@ -20,6 +20,11 @@
       --muted: #9fb2b6;
       --shadow: rgba(0, 0, 0, .34);
       --accent: var(--teal);
+      --ease-out: cubic-bezier(.2, .8, .2, 1);
+      --ease-in: cubic-bezier(.4, 0, 1, 1);
+      --spring: cubic-bezier(.2, 1.4, .38, 1);
+      --overshoot: cubic-bezier(.68, -.6, .32, 1.6);
+      --motion-enter: cubic-bezier(.16, 1, .3, 1);
     }
 
     * {
@@ -74,11 +79,14 @@
 
     .bg-animation {
       position: absolute;
-      inset: 0;
+      inset: -9%;
       z-index: 0;
       overflow: hidden;
       pointer-events: none;
       opacity: .72;
+      transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0);
+      transition: transform .3s var(--ease-out);
+      will-change: transform;
     }
 
     .bg-svg {
@@ -160,12 +168,33 @@
       animation: screenPopIn .42s cubic-bezier(.2, 1.16, .38, 1) both;
     }
 
+    #app.is-boot-reveal .select-hero {
+      animation: selectRise .6s var(--motion-enter) both;
+    }
+
+    #app.is-boot-reveal .drum-card {
+      animation: selectRise .68s var(--spring) both;
+    }
+
+    #app.is-boot-reveal .drum-card:nth-of-type(1) {
+      animation-delay: .09s;
+    }
+
+    #app.is-boot-reveal .drum-card:nth-of-type(2) {
+      animation-delay: .18s;
+    }
+
     ::view-transition-old(root) {
       animation: screenFadeOut .24s ease-out both;
     }
 
     ::view-transition-new(root) {
       animation: screenFadeIn .34s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    ::view-transition-group(selected-drum-art) {
+      animation-duration: .46s;
+      animation-timing-function: cubic-bezier(.2, .88, .22, 1);
     }
 
     .select-screen {
@@ -272,16 +301,49 @@
         linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 25%, transparent), transparent 38%),
         linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .025)),
         var(--panel);
+      --magnet-x: 0px;
+      --magnet-y: 0px;
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      --shine-x: 50%;
+      --shine-y: 50%;
+      transform-style: preserve-3d;
       box-shadow: 0 18px 34px var(--shadow);
       cursor: pointer;
       transition: transform .26s ease, border-color .26s ease, opacity .26s ease, box-shadow .26s ease;
+      will-change: transform;
+    }
+
+    .drum-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at var(--shine-x) var(--shine-y), color-mix(in srgb, var(--card-accent) 46%, white) 0 8%, transparent 42%),
+        linear-gradient(120deg, transparent 12%, rgba(255, 255, 255, .13), transparent 42%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+    }
+
+    .drum-card:hover::before,
+    .drum-card:focus-visible::before,
+    .drum-card.is-selected::before {
+      opacity: .58;
     }
 
     .drum-card:hover,
     .drum-card:focus-visible {
       border-color: color-mix(in srgb, var(--card-accent) 64%, white);
       box-shadow: 0 22px 42px rgba(0, 0, 0, .38);
-      transform: translateY(-4px) scale(1.018);
+      transform:
+        perspective(760px)
+        translateY(-4px)
+        rotateX(var(--tilt-y))
+        rotateY(var(--tilt-x))
+        scale(1.018);
     }
 
     .drum-card:active {
@@ -297,6 +359,8 @@
     }
 
     .card-media {
+      position: relative;
+      z-index: 1;
       display: grid;
       place-items: center;
       min-width: 0;
@@ -313,9 +377,24 @@
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
+      transform: translate3d(var(--magnet-x), var(--magnet-y), 0) scale(var(--media-scale, 1));
+      transition: transform .26s cubic-bezier(.2, .8, .2, 1), filter .26s ease;
+    }
+
+    .drum-card:hover .card-media img,
+    .drum-card:focus-visible .card-media img,
+    .drum-card.is-selected .card-media img {
+      --media-scale: 1.035;
+      filter: drop-shadow(0 18px 18px rgba(0, 0, 0, .26)) drop-shadow(0 0 16px color-mix(in srgb, var(--card-accent) 30%, transparent));
+    }
+
+    .drum-card.is-selected .card-media img {
+      view-transition-name: selected-drum-art;
     }
 
     .card-copy {
+      position: relative;
+      z-index: 1;
       min-width: 0;
       padding-left: 12px;
       text-align: left;
@@ -347,6 +426,7 @@
       pointer-events: none;
       transform: translate(-50%, -50%) scale(1);
       animation: ripple .42s ease-out forwards;
+      z-index: 2;
     }
 
     .play-screen {
@@ -510,9 +590,27 @@
       max-width: 96%;
       max-height: 100%;
       margin: auto;
+      isolation: isolate;
+    }
+
+    .drum-stage::before {
+      content: "";
+      position: absolute;
+      inset: -8% -8% -3%;
+      z-index: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 47%, color-mix(in srgb, var(--accent) 52%, transparent) 0 26%, rgba(255, 236, 110, .16) 44%, transparent 70%);
+      filter: blur(12px);
+      opacity: .5;
+      pointer-events: none;
+      will-change: transform, opacity;
+      animation: drumAmbientGlow 6s ease-in-out infinite;
     }
 
     .drum-photo {
+      position: relative;
+      z-index: 1;
       display: block;
       width: 100%;
       height: 100%;
@@ -521,11 +619,17 @@
       user-select: none;
       pointer-events: none;
       -webkit-user-drag: none;
+      view-transition-name: selected-drum-art;
+    }
+
+    .drum-stage.is-resonating .drum-photo {
+      animation: drumResonance .46s cubic-bezier(.2, .8, .2, 1) both;
     }
 
     .tongue-layer {
       position: absolute;
       inset: 0;
+      z-index: 2;
     }
 
     .tongue-hit {
@@ -694,6 +798,7 @@
       border-radius: inherit;
       opacity: 0;
       pointer-events: none;
+      z-index: 1;
     }
 
     .tongue-hit::after {
@@ -703,6 +808,22 @@
       border-radius: inherit;
       opacity: 0;
       pointer-events: none;
+      z-index: 1;
+    }
+
+    .tongue-hit.is-playing::before {
+      background:
+        radial-gradient(circle, rgba(255, 250, 176, .72) 0 16%, rgba(255, 210, 82, .24) 34%, transparent 68%);
+      animation: tongueHitBloom .44s cubic-bezier(.18, .82, .24, 1) both;
+    }
+
+    .tongue-hit.is-playing::after {
+      inset: 11%;
+      border: 1px solid rgba(255, 252, 188, .82);
+      box-shadow:
+        0 0 10px rgba(255, 244, 98, .46),
+        inset 0 0 10px rgba(255, 210, 82, .22);
+      animation: tongueHitRing .52s cubic-bezier(.2, .82, .22, 1) both;
     }
 
     .tongue-hit:hover .tongue-svg,
@@ -813,13 +934,13 @@
       background: rgba(255, 210, 122, .08);
       font-size: .8rem;
       opacity: 0;
-      transform: translateY(3px);
-      transition: opacity .22s ease, transform .22s ease;
+      transform: translateY(3px) scale(.92);
+      transition: opacity .2s ease, transform .26s var(--overshoot);
     }
 
     .recent-note.is-visible {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
 
     .guide-toggle {
@@ -883,6 +1004,85 @@
       to {
         opacity: 0;
         transform: translate(-50%, -50%) scale(46);
+      }
+    }
+
+    @keyframes drumAmbientGlow {
+      0%,
+      100% {
+        opacity: .4;
+        transform: scale(.96);
+      }
+
+      50% {
+        opacity: .6;
+        transform: scale(1.04);
+      }
+    }
+
+    @keyframes selectRise {
+      0% {
+        opacity: 0;
+        transform: translateY(22px) scale(.97);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes tongueHitBloom {
+      0% {
+        opacity: 0;
+        transform: scale(.26);
+      }
+
+      38% {
+        opacity: .82;
+        transform: scale(.82);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.08);
+      }
+    }
+
+    @keyframes tongueHitRing {
+      0% {
+        opacity: 0;
+        transform: scale(.48);
+      }
+
+      34% {
+        opacity: .92;
+        transform: scale(.92);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.28);
+      }
+    }
+
+    @keyframes drumResonance {
+      0% {
+        filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .30));
+        transform: scale(1);
+      }
+
+      42% {
+        filter:
+          drop-shadow(0 18px 22px rgba(0, 0, 0, .30))
+          drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 30%, transparent))
+          drop-shadow(0 0 22px rgba(255, 236, 110, .20));
+        transform: scale(1.006);
+      }
+
+      100% {
+        filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .30));
+        transform: scale(1);
       }
     }
 
@@ -1206,22 +1406,46 @@
       .tongue-svg,
       .tongue-wave-path,
       .tongue-spark,
+      .drum-card,
+      .drum-card:hover,
+      .drum-card:focus-visible,
+      .card-media img,
+      .drum-stage.is-resonating .drum-photo,
       .alpaca-body,
       .alpaca-mallet-left,
       .alpaca-mallet-right,
       .alpaca-drum-glow,
+      .bg-animation,
       .bg-wave,
       .bg-note,
       .bg-sparkle,
       .bg-drum,
+      .drum-stage::before,
+      .select-hero,
       .tongue-hit.is-playing::after {
         transform: none;
+      }
+
+      .drum-stage::before,
+      .bg-wave,
+      .bg-note,
+      .bg-sparkle,
+      .bg-drum,
+      .alpaca-body,
+      .alpaca-mallet-left,
+      .alpaca-mallet-right,
+      .alpaca-drum-glow {
+        animation: none !important;
+      }
+
+      .drum-stage::before {
+        opacity: .5;
       }
     }
   </style>
 </head>
 <body>
-  <div id="app">
+  <div id="app" class="is-boot-reveal">
     <div class="bg-animation" aria-hidden="true">
       <svg class="bg-svg" viewBox="0 0 360 640" preserveAspectRatio="none">
         <path class="bg-wave" d="M-20 104 C42 74 78 142 136 112 S244 78 314 124 S414 150 450 102"/>
@@ -1470,6 +1694,7 @@
       const state = {
         currentType: null,
         hideRecentTimer: null,
+        resonanceTimer: null,
         selectedTimer: null,
         lastPointerHit: null,
       };
@@ -1737,6 +1962,12 @@
         target.innerHTML = ALPACA_SVG;
       });
 
+      if (shouldReduceMotion()) {
+        els.app.classList.remove("is-boot-reveal");
+      } else {
+        setTimeout(() => els.app.classList.remove("is-boot-reveal"), 1100);
+      }
+
       function addRipple(button, event) {
         const rect = button.getBoundingClientRect();
         const ripple = document.createElement("span");
@@ -1755,6 +1986,46 @@
 
       function shouldReduceMotion() {
         return Boolean(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      }
+
+      function updateCardMagnet(card, event) {
+        if (!card || shouldReduceMotion()) return;
+        const rect = card.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const localX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+        const localY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+        const xRatio = localX / rect.width;
+        const yRatio = localY / rect.height;
+        const x = xRatio - 0.5;
+        const y = yRatio - 0.5;
+
+        card.style.setProperty("--magnet-x", `${(x * 8).toFixed(2)}px`);
+        card.style.setProperty("--magnet-y", `${(y * 6).toFixed(2)}px`);
+        card.style.setProperty("--tilt-x", `${(x * 4.2).toFixed(2)}deg`);
+        card.style.setProperty("--tilt-y", `${(-y * 3.4).toFixed(2)}deg`);
+        card.style.setProperty("--shine-x", `${(xRatio * 100).toFixed(1)}%`);
+        card.style.setProperty("--shine-y", `${(yRatio * 100).toFixed(1)}%`);
+      }
+
+      function resetCardMagnet(card) {
+        if (!card) return;
+        card.style.setProperty("--magnet-x", "0px");
+        card.style.setProperty("--magnet-y", "0px");
+        card.style.setProperty("--tilt-x", "0deg");
+        card.style.setProperty("--tilt-y", "0deg");
+        card.style.setProperty("--shine-x", "50%");
+        card.style.setProperty("--shine-y", "50%");
+      }
+
+      function pulseDrumResonance() {
+        if (!els.drumStage || shouldReduceMotion()) return;
+        clearTimeout(state.resonanceTimer);
+        els.drumStage.classList.remove("is-resonating");
+        void els.drumStage.offsetWidth;
+        els.drumStage.classList.add("is-resonating");
+        state.resonanceTimer = setTimeout(() => {
+          els.drumStage.classList.remove("is-resonating");
+        }, 480);
       }
 
       function replayScreenPop(screen) {
@@ -1949,6 +2220,7 @@
       function flashTongue(noteId) {
         const target = els.tongueLayer.querySelector(`.tongue-hit[data-note="${noteId}"]`);
         if (!target) return;
+        pulseDrumResonance();
         target.classList.remove("is-playing");
         void target.offsetWidth;
         target.classList.add("is-playing");
@@ -1983,6 +2255,8 @@
       }
 
       els.cards.forEach((card) => {
+        card.addEventListener("pointermove", (event) => updateCardMagnet(card, event));
+        card.addEventListener("pointerleave", () => resetCardMagnet(card));
         card.addEventListener("click", (event) => {
           clearTimeout(state.selectedTimer);
           addRipple(card, event);
@@ -2012,6 +2286,40 @@
         triggerNote(noteId);
       });
 
+      function initBackgroundParallax() {
+        const bgLayer = document.querySelector(".bg-animation");
+        if (!bgLayer || shouldReduceMotion()) return;
+        let frame = 0;
+        let pending = null;
+        const apply = () => {
+          frame = 0;
+          if (!pending) return;
+          const width = root.innerWidth || 1;
+          const height = root.innerHeight || 1;
+          const nx = pending.x / width - 0.5;
+          const ny = pending.y / height - 0.5;
+          bgLayer.style.setProperty("--parallax-x", `${(nx * -28).toFixed(2)}px`);
+          bgLayer.style.setProperty("--parallax-y", `${(ny * -28).toFixed(2)}px`);
+        };
+        const recenter = () => {
+          pending = null;
+          bgLayer.style.setProperty("--parallax-x", "0px");
+          bgLayer.style.setProperty("--parallax-y", "0px");
+        };
+        els.app.addEventListener("pointermove", (event) => {
+          if (event.pointerType === "touch") return;
+          // Keep the backdrop calm while the player aims at tongue slits.
+          if (!els.playScreen.hidden) {
+            recenter();
+            return;
+          }
+          pending = { x: event.clientX, y: event.clientY };
+          if (!frame) frame = requestAnimationFrame(apply);
+        });
+        els.app.addEventListener("pointerleave", recenter);
+      }
+
+      initBackgroundParallax();
       addEventListener("resize", () => requestAnimationFrame(fitStage));
       enableCalibrate();
       const initialType = initialTypeFromSearch(location.search);
